@@ -137,7 +137,7 @@ public class Bitboards {
     {
         assert 7 < pos;
         assert 56 > pos;
-        long pawn = 0;
+        long pawn = 0L;
         long pos_sq = 1L << pos;
         if(pos >>> 3 == 6){
             pawn |= pos_sq >>> 16;

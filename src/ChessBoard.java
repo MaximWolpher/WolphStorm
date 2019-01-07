@@ -72,15 +72,15 @@ public class ChessBoard {
         }
         else if(special==3){ // Queen castle
             System.out.println("queen castle");
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from-2));
-            this.board[turn][3] ^= (1L<<(from-4))|(1L<<(from-1));
+            this.board[turn][5] ^= (1L<<from)|(1L<<(from+2));
+            this.board[turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
             update_castles(from-4);
 
         }
         else if(special==2){ // King castle
             System.out.println("king castle");
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from+2));
-            this.board[turn][3] ^= (1L<<(from+3))|(1L<<(from+1));
+            this.board[turn][5] ^= (1L<<from)|(1L<<(from-2));
+            this.board[turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
             update_castles(from+3);
 
         }
@@ -151,13 +151,13 @@ public class ChessBoard {
 
         }
         else if(special==3){ // Queen castle
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from-2));
-            this.board[turn][3] ^= (1L<<(from-4))|(1L<<(from-1));
+            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from+2));
+            this.board[turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
 
         }
         else if(special==2){ // King castle
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from+2));
-            this.board[turn][3] ^= (1L<<(from+3))|(1L<<(from+1));
+            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from-2));
+            this.board[turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
 
         }
         else if(special==5){ // En Passant
@@ -220,6 +220,14 @@ public class ChessBoard {
         if(special>5){
             int promo_piece = (special&3);
             parsed_move+=promos[promo_piece];
+        }
+        else if(special == 2){
+            // Short Castle zero or O??
+            parsed_move = "O-O";
+        }
+        else if(special == 3){
+            // Long Castle
+            parsed_move = "O-O-O";
         }
         return parsed_move;
 
@@ -367,10 +375,10 @@ public class ChessBoard {
             int castle = 0;
             for(int i = 0;i < s.length();i++){
                 char c = s.charAt(i);
-                if(c == 'K'){castle^=1L<<3;}
-                if(c == 'Q'){castle^=1L<<2;}
-                if(c == 'k'){castle^=1L<<1;}
-                if(c == 'q'){castle^=1L;}
+                if(c == 'K'){castle^=1<<3;}
+                if(c == 'Q'){castle^=1<<2;}
+                if(c == 'k'){castle^=1<<1;}
+                if(c == 'q'){castle^=1;}
             }
             this.castles = castle;
         }

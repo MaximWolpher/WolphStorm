@@ -153,7 +153,7 @@ public class Moves {
             // One or two captures possible
 
             loc = Utils.pop_1st_bit(captures);
-            captures ^= 1L<<loc;
+            captures ^= 1L << loc;
             moves.add(move_integer(enemy_pieces, loc, ep_square,0, 5)); // pawn with EP capture
         }
         return moves;
@@ -174,17 +174,16 @@ public class Moves {
         if(castle_right == 0){
             return moves; // No castle moves
         }
-
         if((castle_right & 1) == 1){    // Queen castle
-            if((7<<(loc+1) & occupied) == 0){
+            if(((7L << (loc+1)) & occupied) == 0){
                 // If there is no blocker between king and queen-side rook
-                moves.add(3); // Encoding for queen castle
+                moves.add(move_integer(0L, loc,0,5,3)); // Encoding for queen castle
             }
         }
         if((castle_right & 2) == 2){    // King castle
-            if((3 << (loc - 2) & occupied) == 0){
+            if(((3L << (loc - 2)) & occupied) == 0){
                 // If there is no blocker between king and king-side rook
-                moves.add(2); // Encoding for king castle
+                moves.add(move_integer(0L, loc, 0, 5, 2)); // Encoding for king castle
             }
         }
         return moves;

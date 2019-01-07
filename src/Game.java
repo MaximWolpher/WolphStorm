@@ -12,7 +12,7 @@ public class Game {
         this.magics = new Magics();
 
         //this.chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        this.chess.fen_to_board("rn2k2b/6P1/3n4/4PpP1/8/n7/PPPPP2P/R3K2R w KQkq f3 0 1");
+        this.chess.fen_to_board("rn2k2r/6P1/3n4/4PpP1/8/n7/PPPPP2P/R3K2R b KQkq f3 0 1");
         Utils.view_board(this.chess.board);
         this.magics.generate_magics();
         this.moves.init_static_moves();
