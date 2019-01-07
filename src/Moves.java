@@ -31,13 +31,14 @@ public class Moves {
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][5], this.King_Move_List, 5, enemy_pieces, not_my_pieces, occupied, magics));
         all_moves.addAll(Castle_Move(occupied, chess.turn, chess.castles));
         if(chess.turn == 1){
-            all_moves.addAll(pseudo_moves(chess.board[chess.turn][0], this.WhitePawn_Move_List, 0, enemy_pieces, not_my_pieces, occupied, magics));
-            all_moves.addAll(pseudo_moves(chess.board[chess.turn][0], this.WhitePawn_Attack_List, 0, enemy_pieces, not_my_pieces, occupied, magics));
+            all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn, this.WhitePawn_Attack_List, enemy_pieces, occupied, true));
+            all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn,  this.WhitePawn_Move_List, enemy_pieces, occupied, false));
         }
-        else{
-            all_moves.addAll(pseudo_moves(chess.board[chess.turn][0], this.BlackPawn_Move_List, 0, enemy_pieces, not_my_pieces, occupied, magics));
-            all_moves.addAll(pseudo_moves(chess.board[chess.turn][0], this.BlackPawn_Attack_List, 0, enemy_pieces, not_my_pieces, occupied, magics));
+        else {
+            all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn, this.BlackPawn_Attack_List, enemy_pieces, occupied, true));
+            all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn, this.BlackPawn_Move_List, enemy_pieces, occupied, false));
         }
+
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][1], this.Knight_Move_List, 1, enemy_pieces, not_my_pieces, occupied, magics));
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][2], new long[0], 2, enemy_pieces, not_my_pieces, occupied, magics));
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][3], new long[0], 3, enemy_pieces, not_my_pieces, occupied, magics));
@@ -58,7 +59,7 @@ public class Moves {
         int from, to;
         long pseudo_legals;
         ArrayList<Integer> moves = new ArrayList<>();
-        while(bitboard != 0){
+        while(bitboard != 0L){
             from = Utils.pop_1st_bit(bitboard);
             bitboard ^= (1L << from);
             if((type == 3) | (type == 2)){
@@ -73,16 +74,69 @@ public class Moves {
                 pseudo_legals = move_bitboards[from];
             }
             pseudo_legals &= not_my_pieces;
-            while(pseudo_legals != 0){
+            while(pseudo_legals != 0L){
                 to = Utils.pop_1st_bit(pseudo_legals);
                 pseudo_legals ^= (1L << to);
                 moves.add(move_integer(enemy_pieces, from, to, type, 0));
             }
-
         }
         return moves;
     }
-    
+
+    ArrayList<Integer> pawn_moves(
+            long bitboard,
+            int turn,
+            long[] move_bitboards,
+            long enemy_pieces,
+            long occupied,
+            boolean attack
+    ){
+        int from, to;
+        int special;
+        long pseudo_legals;
+        long double_jump_rank;
+        int end_rank;
+        ArrayList<Integer> moves = new ArrayList<>();
+        while(bitboard != 0){
+            from = Utils.pop_1st_bit(bitboard);
+            bitboard ^= (1L << from);
+            pseudo_legals = move_bitboards[from];
+            if(attack){
+                pseudo_legals &= enemy_pieces;
+            }
+            else{
+                pseudo_legals &= ~occupied;
+            }
+
+            while(pseudo_legals != 0){
+                to = Utils.pop_1st_bit(pseudo_legals);
+                pseudo_legals ^= (1L << to);
+                end_rank = (turn == 0) ? 0: 7;
+                if(Math.abs(from-to) == 16){
+                    double_jump_rank = (turn == 0) ?
+                            (1L << (from - 8)) & 0xff0000000000L : (1L << (from + 8)) & 0xff0000;
+                    if((double_jump_rank & occupied) != 0){
+                        continue;
+                    }
+                    special = 1;
+                    moves.add(move_integer(enemy_pieces, from, to, 0, special));
+
+                }
+                else if((to >> 3) == end_rank){
+                    for(int prom = 0; prom < 4; prom++){
+                        special = 8 + prom;
+                        moves.add(move_integer(enemy_pieces, from, to, 0, special));
+                    }
+                }
+                else {
+                    moves.add(move_integer(enemy_pieces, from, to, 0, 0));
+                }
+
+            }
+        }
+        return moves;
+    }
+
     public ArrayList<Integer> EP_move(int ep_square, int turn, long[][] board,
                                       long[] white_pawn_attacks, long[] black_pawn_attacks,
                                       long enemy_pieces){
@@ -92,6 +146,7 @@ public class Moves {
         if(ep_square == 0){
             return moves;
         }
+        ep_square = (turn == 0)? (8 - ep_square) + 0x10 : (8-ep_square) + 0x28;
         captures = (turn == 0)?
                 white_pawn_attacks[ep_square] & board[turn][0]: black_pawn_attacks[ep_square] & board[turn][0];
         while(captures != 0){
@@ -100,7 +155,6 @@ public class Moves {
             loc = Utils.pop_1st_bit(captures);
             captures ^= 1L<<loc;
             moves.add(move_integer(enemy_pieces, loc, ep_square,0, 5)); // pawn with EP capture
-
         }
         return moves;
 

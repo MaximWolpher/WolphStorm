@@ -1,5 +1,3 @@
-import jdk.jfr.Unsigned;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -13,10 +11,12 @@ public class Game {
         this.moves = new Moves();
         this.magics = new Magics();
 
-        this.chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        //this.chess.fen_to_board("rnbqkbnr/ppppp1pp/8/8/4pP11/8/PPPPPP1P/R3K2R b KQkq - 0 1");
+        //this.chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        this.chess.fen_to_board("rn2k2b/6P1/3n4/4PpP1/8/n7/PPPPP2P/R3K2R w KQkq f3 0 1");
+        Utils.view_board(this.chess.board);
         this.magics.generate_magics();
         this.moves.init_static_moves();
+        Utils.view_board(this.chess.board);
     }
 
     public static void main(String[] args) {
@@ -28,7 +28,7 @@ public class Game {
             game.chess.make_move(m);
             Utils.view_board(game.chess.board);
             game.chess.unmake_move();
-            Utils.view_board(game.chess.board);
+            //Utils.view_board(game.chess.board);
 
         }
     }

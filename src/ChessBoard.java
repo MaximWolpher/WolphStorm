@@ -55,11 +55,12 @@ public class ChessBoard {
     public void make_move(int move){
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
-        int type_from = (move >>> 7) & 5;
-        int type_to = (move >>> 4) & 5;
+        int type_from = (move >>> 7) & 7;
+        int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
 
         System.out.println(from+" "+to+" "+type_from+" "+type_to+" "+special);
+        System.out.println(parse_move(move));
         if(special<=1){ // Quiet move
             this.board[turn][type_from]^=(1L<<from)|(1L<<to);
         }
@@ -126,8 +127,8 @@ public class ChessBoard {
         int move = prev.move_prev;
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
-        int type_from = (move >>> 7) & 5;
-        int type_to = (move >>> 4) & 5;
+        int type_from = (move >>> 7) & 7;
+        int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
         System.out.println(from+" "+to+" "+type_from+" "+type_to+" "+special);
 
@@ -167,7 +168,7 @@ public class ChessBoard {
 
         }
         else if(special>5){ // Promo
-            this.board[turn][from] ^= (1L<<from);
+            this.board[turn][type_from] ^= (1L<<from);
             this.board[turn][((special&3)+1)] ^= (1L<<to);
 
             if((special&4)==4){ // Promo Capture
@@ -192,8 +193,8 @@ public class ChessBoard {
 
 
     public void update_EP(int move) {
-        int from = (move >>> 16);
-        int special = move & 15;
+        int from = (move >>> 16) & 0x3f;
+        int special = move & 0xf;
         if (special == 1) {
             this.EP = (from & 7) + 1;
         } else {
@@ -206,15 +207,15 @@ public class ChessBoard {
         String[] promos = {"n","b","r","q"};
         String[] ranks = {"a","b","c","d","e","f","g","h"};
         String parsed_move = "";
-        int from = (move>>>16);
-        int to = (move>>>10)&63;
-        int special = move&15;
+        int from = (move >>> 16) & 0x3f;
+        int to = (move >>> 10) & 0x3f;
+        int special = move & 0xf;
         //From
-        parsed_move+=ranks[from%8];
-        parsed_move+=Integer.toString(8-(from/8));
+        parsed_move+=ranks[ranks.length - (1 + (from&7))];
+        parsed_move+=Integer.toString(1 + (from>>3));
         //To
-        parsed_move+=ranks[to%8];
-        parsed_move+=Integer.toString(8-(to/8));
+        parsed_move+=ranks[ranks.length - (1 + (to & 7))];
+        parsed_move+=Integer.toString(1 + (to>>3));
         //Promo
         if(special>5){
             int promo_piece = (special&3);
