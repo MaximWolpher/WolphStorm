@@ -16,7 +16,6 @@ public class Game {
         Utils.view_board(this.chess.board);
         this.magics.generate_magics();
         this.moves.init_static_moves();
-        Utils.view_board(this.chess.board);
     }
 
     public static void main(String[] args) {
