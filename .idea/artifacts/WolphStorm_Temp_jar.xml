@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="WolphStorm_Temp:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/WolphStorm_Temp_jar</output-path>
+    <root id="archive" name="WolphStorm_Temp.jar">
+      <element id="module-output" name="WolphStorm" />
+    </root>
+  </artifact>
+</component>
