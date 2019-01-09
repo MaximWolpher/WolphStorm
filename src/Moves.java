@@ -51,6 +51,7 @@ public class Moves {
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][4], chess.turn, new long[0], 4, enemy_pieces, not_my_pieces, occupied, magics));
 
         update_all_attacks(chess.turn);
+
         return all_moves;
     }
 

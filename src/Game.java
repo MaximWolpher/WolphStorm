@@ -15,21 +15,17 @@ public class Game {
         Utils.view_board(this.chess.board);
         this.magics.generate_magics();
         this.moves.init_static_moves();
+        chess.turn^=1;
+        moves.generate_moves(chess, magics);
+        chess.turn^=1;
     }
 
     public static void main(String[] args) {
         Game game = new Game();
         game.initiate();
-        game.chess.turn ^= 1;
-        game.moves.generate_moves(game.chess, game.magics);
-        game.chess.turn ^= 1;
+
         ArrayList<Integer> moves = game.moves.generate_moves(game.chess, game.magics);
-        for(int i=0; i<6; i++){
-            System.out.println("White attacks: "+i);
-            Utils.view_bitboard(game.moves.attacks[1][i]);
-            System.out.println("Black attacks: "+i);
-            Utils.view_bitboard(game.moves.attacks[0][i]);
-        }
+
         System.out.println("");
         System.out.println(moves.toString());
         for(int m: moves){
