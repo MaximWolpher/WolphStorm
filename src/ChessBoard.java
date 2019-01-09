@@ -202,6 +202,10 @@ public class ChessBoard {
         }
     }
 
+    public boolean isLegal(){
+        return true;
+    }
+
 
     public static String parse_move(int move){
         String[] promos = {"n","b","r","q"};

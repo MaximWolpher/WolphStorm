@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Game {
     private ChessBoard chess;
@@ -12,7 +11,7 @@ public class Game {
         this.magics = new Magics();
 
         //this.chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        this.chess.fen_to_board("rn2k2r/6P1/3n4/4PpP1/8/n7/PPPPP2P/R3K2R b KQkq f3 0 1");
+        this.chess.fen_to_board("rn1bkq1r/6P1/3n4/4P1P1/8/n7/PPPPP2P/R3K2R w KQkq f3 0 1");
         Utils.view_board(this.chess.board);
         this.magics.generate_magics();
         this.moves.init_static_moves();
@@ -21,7 +20,17 @@ public class Game {
     public static void main(String[] args) {
         Game game = new Game();
         game.initiate();
+        game.chess.turn ^= 1;
+        game.moves.generate_moves(game.chess, game.magics);
+        game.chess.turn ^= 1;
         ArrayList<Integer> moves = game.moves.generate_moves(game.chess, game.magics);
+        for(int i=0; i<6; i++){
+            System.out.println("White attacks: "+i);
+            Utils.view_bitboard(game.moves.attacks[1][i]);
+            System.out.println("Black attacks: "+i);
+            Utils.view_bitboard(game.moves.attacks[0][i]);
+        }
+        System.out.println("");
         System.out.println(moves.toString());
         for(int m: moves){
             game.chess.make_move(m);
