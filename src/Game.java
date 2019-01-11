@@ -25,7 +25,12 @@ public class Game {
         game.initiate();
 
         ArrayList<Integer> moves = game.moves.generate_moves(game.chess, game.magics);
-
+        for(int turn=0; turn<2; turn++) {
+            for (int type_idx = 0; type_idx < 6; type_idx++) {
+                System.out.println(turn + " " + type_idx);
+                Utils.view_bitboard(game.moves.attacks[turn][type_idx]);
+            }
+        }
         System.out.println("");
         System.out.println(moves.toString());
         for(int m: moves){

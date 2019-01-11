@@ -8,8 +8,7 @@ public class Moves {
     long[] BlackPawn_Move_List = new long[64];
     long[] WhitePawn_Attack_List = new long[64];
     long[] BlackPawn_Attack_List = new long[64];
-    long[][] attacks = new long[2][6];
-    long[] all_attacks = new long[2];
+    public long[][] attacks = new long[2][6];
 
     void init_static_moves(){
         for(int square=0; square<64; square++){
@@ -27,10 +26,11 @@ public class Moves {
         long occupied = pieces[0] | pieces[1];
         long enemy_pieces = pieces[chess.turn^1];
         long not_my_pieces = ~pieces[chess.turn];
-        for(int att=0; att<6;att++) {
-            this.attacks[chess.turn][att] = 0L;
+        for(int type_idx=0; type_idx<6; type_idx++) {
+                for(int to_idx=0; to_idx<64; to_idx++) {
+                    this.attacks[chess.turn][type_idx] = 0L;
+                }
         }
-        this.all_attacks[chess.turn] = 0L;
         ArrayList<Integer> all_moves = new ArrayList<>();
 
         all_moves.addAll(EP_move(chess.EP, chess.turn, chess.board, this.WhitePawn_Attack_List, this.BlackPawn_Attack_List, enemy_pieces));
@@ -50,15 +50,7 @@ public class Moves {
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][3], chess.turn, new long[0], 3, enemy_pieces, not_my_pieces, occupied, magics));
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][4], chess.turn, new long[0], 4, enemy_pieces, not_my_pieces, occupied, magics));
 
-        update_all_attacks(chess.turn);
-
         return all_moves;
-    }
-
-    void update_all_attacks(int turn){
-        for(int att=0; att<6; att++){
-            this.all_attacks[turn] |= this.attacks[turn][att];
-        }
     }
 
     ArrayList<Integer> pseudo_moves(
@@ -88,12 +80,11 @@ public class Moves {
             else {
                 pseudo_legals = move_bitboards[from];
             }
-            this.attacks[turn][type] |= pseudo_legals;
             if (type == 5){
-                long all_enemy_attacks = 0L;
-
-                pseudo_legals = move_bitboards[from] & ~all_enemy_attacks;
+                long enemy_attacks = this.enemy_attacks(turn);
+                pseudo_legals = move_bitboards[from] & ~enemy_attacks;
             }
+            this.attacks[turn][type] |= pseudo_legals;
             pseudo_legals &= not_my_pieces;
             while(pseudo_legals != 0L){
                 to = Utils.pop_1st_bit(pseudo_legals);
@@ -135,6 +126,7 @@ public class Moves {
                 pseudo_legals ^= (1L << to);
                 end_rank = (turn == 0) ? 0: 7;
                 if(Math.abs(from-to) == 16){
+                    // Double jump from start
                     double_jump_rank = (turn == 0) ?
                             (1L << (from - 8)) & 0xff0000000000L : (1L << (from + 8)) & 0xff0000;
                     if((double_jump_rank & occupied) != 0){
@@ -142,21 +134,30 @@ public class Moves {
                     }
                     special = 1;
                     moves.add(move_integer(enemy_pieces, from, to, 0, special));
-
                 }
                 else if((to >> 3) == end_rank){
+                    // Promotion
                     for(int prom = 0; prom < 4; prom++){
                         special = 8 + prom;
                         moves.add(move_integer(enemy_pieces, from, to, 0, special));
                     }
                 }
                 else {
+                    // Quiet move
                     moves.add(move_integer(enemy_pieces, from, to, 0, 0));
                 }
 
             }
         }
         return moves;
+    }
+
+    long enemy_attacks(int turn){
+        long enemy_map = 0L;
+        for(int type=0; type<6; type++){
+            enemy_map |= this.attacks[turn^1][type];
+        }
+        return enemy_map;
     }
 
     public ArrayList<Integer> EP_move(int ep_square, int turn, long[][] board,
