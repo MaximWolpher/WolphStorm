@@ -2,27 +2,26 @@ import java.util.ArrayList;
 
 public class Game {
     private ChessBoard chess;
-    private Moves moves;
-    private Magics magics;
 
     public Game(String fen) {
 
         this.chess = new ChessBoard();
-        this.moves = new Moves();
-        this.magics = new Magics();
+        Moves moves = new Moves();
+        moves.init_static_moves();
+        Magics magics = new Magics();
+        magics.generate_magics();
 
+        this.chess.setMoves(moves);
+        this.chess.setMagics(magics);
         this.chess.fen_to_board(fen);
-        this.magics.generate_magics();
-        this.chess.magics = this.magics;
-        this.moves.init_static_moves();
 
-        chess.turn^=1;
+        this.chess.changeTurn();
         moves.generate_moves(chess, magics);
-        chess.turn^=1;
+        this.chess.changeTurn();
     }
 
     public ArrayList<Integer> generate_moves(){
-        return this.moves.generate_moves(this.chess, this.magics);
+        return this.chess.generate_moves();
     }
 
     public boolean make_move(int move){
@@ -35,5 +34,9 @@ public class Game {
 
     public void view_board(){
         Utils.view_board(this.chess.board);
+    }
+
+    public void enemy_attacks(){
+        this.chess.enemy_attacks();
     }
 }

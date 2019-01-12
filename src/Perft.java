@@ -18,7 +18,14 @@ public class Perft {
             if (!legal) {
                 game.unmake_move();
             } else {
-                game.view_board();
+
+                //System.out.println("Depth: "+depth);
+                if(depth==2){
+                    game.view_board();
+                    System.out.println("attacks");
+                    game.enemy_attacks();
+                }
+
                 nodes += run_perft(depth - 1);
                 game.unmake_move();
             }

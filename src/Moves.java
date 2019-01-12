@@ -54,6 +54,8 @@ public class Moves {
         return all_moves;
     }
 
+
+
     ArrayList<Integer> pseudo_moves(
             long bitboard,
             int turn,
@@ -151,6 +153,49 @@ public class Moves {
             }
         }
         return moves;
+    }
+
+    void update_attacks(ChessBoard chess, int turn, int type_from, Magics magics){
+        long[] pieces = {chess.black_pieces, chess.white_pieces};
+        this.attacks[turn][type_from] = 0L;
+        long enemy_pieces = pieces[turn^1];
+        long occupied = chess.white_pieces | chess.black_pieces;
+
+        if(type_from == 0){
+            long[] attack_board = (turn == 0)? this.BlackPawn_Attack_List: this.WhitePawn_Attack_List;
+
+            this.pawn_moves(
+                    chess.board[turn][type_from],
+                    turn,
+                    attack_board,
+                    enemy_pieces,
+                    occupied,
+                    true
+            );
+        }
+        else {
+            long[] attack_board;
+            long not_my_pieces = ~pieces[turn];
+            switch (type_from){
+                case 5: attack_board = this.King_Move_List;
+                    break;
+                case 1: attack_board = this.Knight_Move_List;
+                    break;
+                default: attack_board = new long[0];
+                    occupied ^= chess.board[turn^1][5];
+                    break;
+            }
+            this.pseudo_moves(
+                    chess.board[turn][type_from],
+                    turn,
+                    attack_board,
+                    type_from,
+                    enemy_pieces,
+                    not_my_pieces,
+                    occupied,
+                    magics
+            );
+        }
     }
 
     long enemy_attacks(int turn){

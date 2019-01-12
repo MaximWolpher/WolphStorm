@@ -11,7 +11,18 @@ public class ChessBoard {
     public long[][] board = {{0L,0L,0L,0L,0L,0L}, {0L,0L,0L,0L,0L,0L}};
     public long white_pieces;
     public long black_pieces;
-    public Magics magics;
+
+    public void setMagics(Magics magics) {
+        this.magics = magics;
+    }
+
+    private Magics magics;
+
+    public void setMoves(Moves moves) {
+        this.moves = moves;
+    }
+
+    private Moves moves;
 
 
     public int turn = 1; // 1 white
@@ -19,8 +30,8 @@ public class ChessBoard {
     public int EP = 0;
     public int hmc = 0; //half move clock
 
-    public int game_over = -1; //{-1 = not over, 0 = white win, 1 = black win, 2 = draw}
-    public ArrayList<Previous_Moves> previous_states = new ArrayList<>();
+    public int game_over = -1; //{-1 = not over, 1 = white win, 0 = black win, 2 = draw}
+    private ArrayList<Previous_Moves> previous_states = new ArrayList<>();
 
     public void initiateStandardChess() {
         String chessBoard[][]={
@@ -55,6 +66,19 @@ public class ChessBoard {
 
     }
 
+    public void changeTurn(){
+        this.turn ^= 1;
+    }
+
+    public ArrayList<Integer> generate_moves(){
+        return this.moves.generate_moves(this, this.magics);
+    }
+
+    public void enemy_attacks(){
+        Utils.view_bitboard(this.moves.enemy_attacks(this.turn));
+    }
+
+
     public boolean make_move(int move){
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
@@ -63,53 +87,67 @@ public class ChessBoard {
         int special = move & 0xf;
         boolean legal = true;
 
+
+        int new_cast = this.castles;
+        int new_ep = this.EP;
+        int new_hmc = this.hmc;
+        long[][] new_attacks = new long[2][6];
+        for(int t=0; t<2; t++){
+            for(int p=0; p<6; p++){
+                new_attacks[t][p] = this.moves.attacks[t][p];
+            }
+        }
+
+        previous_states.add(new Previous_Moves(move, new_cast, new_ep, new_hmc, type_to, new_attacks));
+
         String move_type = "Quiet move";
 
         if(special<=1){ // Quiet move
-            this.board[turn][type_from]^=(1L<<from)|(1L<<to);
+            this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
         }
         else if(special==4){ // Capture
             move_type = "Capture";
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
+            this.board[this.turn^1][type_to] ^= (1L<<to);
+            this.moves.attacks[this.turn^1][type_to] = 0L;
 
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<to);
-            this.board[turn^1][type_to] ^= (1L<<to);
+            this.moves.update_attacks(this, this.turn^1, type_to, this.magics);
         }
         else if(special==3){ // Queen castle
             move_type = "queen castle";
-            this.board[turn][5] ^= (1L<<from)|(1L<<(from+2));
-            this.board[turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
+            this.board[this.turn][5] ^= (1L<<from)|(1L<<(from+2));
+            this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
             update_castles(from-4);
 
         }
         else if(special==2){ // King castle
             move_type = "king castle";
-            this.board[turn][5] ^= (1L<<from)|(1L<<(from-2));
-            this.board[turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
+            this.board[this.turn][5] ^= (1L<<from)|(1L<<(from-2));
+            this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
             update_castles(from+3);
 
         }
         else if(special==5){ // En Passant
             move_type = "en passant";
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(to));
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
             long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]);
-            this.board[turn^1][0] ^= ep_pawn;
+            this.board[this.turn^1][0] ^= ep_pawn;
+            this.moves.update_attacks(this, this.turn^1,0, this.magics);
 
         }
         else if(special > 5){ // Promo
             move_type = "promo";
-            this.board[turn][type_from] ^= (1L<<from);
-            this.board[turn][((special&3)+1)] ^= (1L<<to);
+            this.board[this.turn][type_from] ^= (1L<<from);
+            this.board[this.turn][((special&3)+1)] ^= (1L<<to);
 
             if((special&4)==4){ // Promo Capture
-                this.board[turn^1][type_to] ^= (1L << to);
+                this.board[this.turn^1][type_to] ^= (1L << to);
             }
         }
 
-        int new_cast = this.castles;
-        int new_ep = this.EP;
-        int new_hmc = this.hmc;
+        this.moves.update_attacks(this, this.turn, type_from, this.magics);
 
-        previous_states.add(new Previous_Moves(move, new_cast, new_ep, new_hmc, type_to));
+
         if(type_from==0 || (special&4)==4){
             this.hmc=0;
         }
@@ -118,14 +156,16 @@ public class ChessBoard {
         }
         update_EP(move);
         update_pieces();
-        this.turn^=1;
 
         if(type_from != 5){
             legal = isLegal();
         }
         if(legal) {
             System.out.println(type_from+" "+parse_move(move)+" "+move_type);
+            System.out.println("Legal?");
+            this.enemy_attacks();
         }
+        this.turn^=1;
 
         return legal;
     }
@@ -142,44 +182,45 @@ public class ChessBoard {
         this.castles = prev.castle_prev;
         this.EP = prev.EP_prev;
         this.hmc = prev.hmc_prev;
+        this.moves.attacks = prev.attacks;
 
         this.turn^=1;
 
 
         if(special<=1){ // Quiet move
-            this.board[turn][type_from]^=(1L<<from)|(1L<<to);
+            this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
 
         }
         else if(special==4){ // Capture
 
-            this.board[turn][type_from]^=(1L<<from)|(1L<<to);
-            this.board[turn^1][type_to] ^= (1L<<to);
+            this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
+            this.board[this.turn^1][type_to] ^= (1L<<to);
 
 
         }
         else if(special==3){ // Queen castle
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from+2));
-            this.board[turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(from+2));
+            this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
 
         }
         else if(special==2){ // King castle
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(from-2));
-            this.board[turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(from-2));
+            this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
 
         }
         else if(special==5){ // En Passant
-            this.board[turn][type_from] ^= (1L<<from)|(1L<<(to));
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
             long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]);
-            this.board[turn^1][0] ^= ep_pawn;
+            this.board[this.turn^1][0] ^= ep_pawn;
 
 
         }
         else if(special>5){ // Promo
-            this.board[turn][type_from] ^= (1L<<from);
-            this.board[turn][((special&3)+1)] ^= (1L<<to);
+            this.board[this.turn][type_from] ^= (1L<<from);
+            this.board[this.turn][((special&3)+1)] ^= (1L<<to);
 
             if((special&4)==4){ // Promo Capture
-                this.board[turn^1][type_to] ^= (1L << to);
+                this.board[this.turn^1][type_to] ^= (1L << to);
 
             }
         }
@@ -211,21 +252,24 @@ public class ChessBoard {
 
     public boolean isLegal(){
 
-        // Turn is opposite
         long occupied = this.white_pieces | this.black_pieces;
-        int king_square = Utils.pop_1st_bit(this.board[this.turn^1][5]);
+        int king_square = Utils.pop_1st_bit(this.board[this.turn][5]);
         long queen_attacks, bishop_attacks, rook_attacks;
         rook_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.rook_magics);
         bishop_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.bishop_magics);
         queen_attacks = rook_attacks | bishop_attacks;
 
-        if((rook_attacks & this.board[this.turn][3]) != 0){
+        if((this.moves.enemy_attacks(this.turn) & this.board[this.turn][5]) != 0){
             return false;
         }
-        if((bishop_attacks & this.board[this.turn][2]) != 0){
+
+        if((rook_attacks & this.board[this.turn^1][3]) != 0){
             return false;
         }
-        return (queen_attacks & this.board[this.turn][4]) == 0;
+        if((bishop_attacks & this.board[this.turn^1][2]) != 0){
+            return false;
+        }
+        return (queen_attacks & this.board[this.turn^1][4]) == 0;
     }
 
 
@@ -314,7 +358,7 @@ public class ChessBoard {
                     if(i!=7){FEN+="/";}
                 }}
         }
-        if(turn == 1){FEN += " w ";}
+        if(this.turn == 1){FEN += " w ";}
         else{FEN+= " b ";}
 
         if (castles!=0) {
@@ -340,7 +384,7 @@ public class ChessBoard {
         if(EP>0){
             int ascii = 96;
             FEN += (char)(ascii+EP);
-            if(turn==1){
+            if(this.turn==1){
                 FEN+="6";
             }
             else{
