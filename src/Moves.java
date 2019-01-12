@@ -24,6 +24,7 @@ public class Moves {
     ArrayList<Integer> generate_moves(ChessBoard chess, Magics magics){
         long[] pieces = {chess.black_pieces, chess.white_pieces};
         long occupied = pieces[0] | pieces[1];
+        occupied ^= chess.board[chess.turn^1][5];
         long enemy_pieces = pieces[chess.turn^1];
         long not_my_pieces = ~pieces[chess.turn];
         for(int type_idx=0; type_idx<6; type_idx++) {
