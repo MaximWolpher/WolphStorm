@@ -82,8 +82,8 @@ public class Moves {
             }
             this.attacks[turn][type] |= pseudo_legals;
             if (type == 5){
-                long enemy_attacks = this.enemy_attacks(turn);
-                pseudo_legals = move_bitboards[from] & ~enemy_attacks;
+                long enemy_attack_map = this.enemy_attacks(turn);
+                pseudo_legals = move_bitboards[from] & ~enemy_attack_map;
             }
             pseudo_legals &= not_my_pieces;
             while(pseudo_legals != 0L){
@@ -197,14 +197,15 @@ public class Moves {
         if(castle_right == 0){
             return moves; // No castle moves
         }
+        long enemy_attack_map = this.enemy_attacks(turn);
         if((castle_right & 1) == 1){    // Queen castle
-            if(((7L << (loc+1)) & occupied) == 0){
+            if(((7L << (loc + 1)) & occupied) == 0 && ((7L << loc) & enemy_attack_map) == 0){
                 // If there is no blocker between king and queen-side rook
                 moves.add(move_integer(0L, loc,0,5,3)); // Encoding for queen castle
             }
         }
         if((castle_right & 2) == 2){    // King castle
-            if(((3L << (loc - 2)) & occupied) == 0){
+            if(((3L << (loc - 2)) & occupied) == 0 && ((7L << (loc - 2)) & enemy_attack_map) == 0){
                 // If there is no blocker between king and king-side rook
                 moves.add(move_integer(0L, loc, 0, 5, 2)); // Encoding for king castle
             }
