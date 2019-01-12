@@ -5,48 +5,35 @@ public class Game {
     private Moves moves;
     private Magics magics;
 
-    private void initiate(){
+    public Game(String fen) {
+
         this.chess = new ChessBoard();
         this.moves = new Moves();
         this.magics = new Magics();
 
-        //this.chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        this.chess.fen_to_board("rn2k2r/pppp1ppp/4pn2/2K3q1/5P2/1PN1PN2/P1PP2PP/R4B1R w kq - 0 1");
-        Utils.view_board(this.chess.board);
+        this.chess.fen_to_board(fen);
         this.magics.generate_magics();
         this.chess.magics = this.magics;
         this.moves.init_static_moves();
+
         chess.turn^=1;
         moves.generate_moves(chess, magics);
         chess.turn^=1;
     }
 
-    public static void main(String[] args) {
-        Game game = new Game();
-        game.initiate();
-        boolean legal;
-
-        ArrayList<Integer> moves = game.moves.generate_moves(game.chess, game.magics);
-        for(int turn=0; turn<2; turn++) {
-            for (int type_idx = 0; type_idx < 6; type_idx++) {
-                System.out.println(turn + " " + type_idx);
-                Utils.view_bitboard(game.moves.attacks[turn][type_idx]);
-            }
-        }
-        System.out.println("");
-        System.out.println(moves.toString());
-        for(int m: moves){
-            legal = game.chess.make_move(m);
-            if(!legal){
-                game.chess.unmake_move();
-            }
-            else {
-                Utils.view_board(game.chess.board);
-                game.chess.unmake_move();
-                //Utils.view_board(game.chess.board);
-            }
-
-        }
+    public ArrayList<Integer> generate_moves(){
+        return this.moves.generate_moves(this.chess, this.magics);
     }
 
+    public boolean make_move(int move){
+        return this.chess.make_move(move);
+    }
+
+    public void unmake_move(){
+        this.chess.unmake_move();
+    }
+
+    public void view_board(){
+        Utils.view_board(this.chess.board);
+    }
 }

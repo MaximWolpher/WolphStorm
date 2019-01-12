@@ -124,9 +124,7 @@ public class ChessBoard {
             legal = isLegal();
         }
         if(legal) {
-            System.out.println(from + " " + to + " " + type_from + " " + type_to + " " + special);
-            System.out.println(parse_move(move));
-            System.out.println(move_type);
+            System.out.println(type_from+" "+parse_move(move)+" "+move_type);
         }
 
         return legal;
