@@ -11,9 +11,10 @@ public class Game {
         this.magics = new Magics();
 
         //this.chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        this.chess.fen_to_board("rn1bkq1r/6P1/3n4/4P1P1/8/n7/PPPPP2P/R3K2R w KQkq - 0 1");
+        this.chess.fen_to_board("rn2k2r/pppp1ppp/4pn2/2K3q1/5P2/1PN1PN2/P1PP2PP/R4B1R w kq - 0 1");
         Utils.view_board(this.chess.board);
         this.magics.generate_magics();
+        this.chess.magics = this.magics;
         this.moves.init_static_moves();
         chess.turn^=1;
         moves.generate_moves(chess, magics);
@@ -23,6 +24,7 @@ public class Game {
     public static void main(String[] args) {
         Game game = new Game();
         game.initiate();
+        boolean legal;
 
         ArrayList<Integer> moves = game.moves.generate_moves(game.chess, game.magics);
         for(int turn=0; turn<2; turn++) {
@@ -34,10 +36,16 @@ public class Game {
         System.out.println("");
         System.out.println(moves.toString());
         for(int m: moves){
-            game.chess.make_move(m);
-            Utils.view_board(game.chess.board);
-            game.chess.unmake_move();
-            //Utils.view_board(game.chess.board);
+            legal = game.chess.make_move(m);
+            System.out.println(legal);
+            if(!legal){
+                game.chess.unmake_move();
+            }
+            else {
+                Utils.view_board(game.chess.board);
+                game.chess.unmake_move();
+                //Utils.view_board(game.chess.board);
+            }
 
         }
     }

@@ -1,3 +1,5 @@
+import jdk.jshell.execution.Util;
+
 import java.math.BigInteger;
 import java.util.*;
 
@@ -9,6 +11,7 @@ public class ChessBoard {
     public long[][] board = {{0L,0L,0L,0L,0L,0L}, {0L,0L,0L,0L,0L,0L}};
     public long white_pieces;
     public long black_pieces;
+    public Magics magics;
 
 
     public int turn = 1; // 1 white
@@ -52,47 +55,48 @@ public class ChessBoard {
 
     }
 
-    public void make_move(int move){
+    public boolean make_move(int move){
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
         int type_from = (move >>> 7) & 7;
         int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
+        boolean legal = true;
 
-        System.out.println(from+" "+to+" "+type_from+" "+type_to+" "+special);
-        System.out.println(parse_move(move));
+        String move_type = "Quiet move";
+
         if(special<=1){ // Quiet move
             this.board[turn][type_from]^=(1L<<from)|(1L<<to);
         }
         else if(special==4){ // Capture
-            System.out.println("Capture");
+            move_type = "Capture";
 
             this.board[turn][type_from] ^= (1L<<from)|(1L<<to);
             this.board[turn^1][type_to] ^= (1L<<to);
         }
         else if(special==3){ // Queen castle
-            System.out.println("queen castle");
+            move_type = "queen castle";
             this.board[turn][5] ^= (1L<<from)|(1L<<(from+2));
             this.board[turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
             update_castles(from-4);
 
         }
         else if(special==2){ // King castle
-            System.out.println("king castle");
+            move_type = "king castle";
             this.board[turn][5] ^= (1L<<from)|(1L<<(from-2));
             this.board[turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
             update_castles(from+3);
 
         }
         else if(special==5){ // En Passant
-            System.out.println("en passant");
+            move_type = "en passant";
             this.board[turn][type_from] ^= (1L<<from)|(1L<<(to));
             long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]);
             this.board[turn^1][0] ^= ep_pawn;
 
         }
         else if(special > 5){ // Promo
-            System.out.println("promo");
+            move_type = "promo";
             this.board[turn][type_from] ^= (1L<<from);
             this.board[turn][((special&3)+1)] ^= (1L<<to);
 
@@ -100,9 +104,6 @@ public class ChessBoard {
                 this.board[turn^1][type_to] ^= (1L << to);
             }
         }
-
-        this.turn^=1;
-
 
         int new_cast = this.castles;
         int new_ep = this.EP;
@@ -117,10 +118,19 @@ public class ChessBoard {
         }
         update_EP(move);
         update_pieces();
+        this.turn^=1;
 
+        if(type_from != 5){
+            legal = isLegal();
+        }
+        if(legal) {
+            System.out.println(from + " " + to + " " + type_from + " " + type_to + " " + special);
+            System.out.println(parse_move(move));
+            System.out.println(move_type);
+        }
+
+        return legal;
     }
-
-
 
     public void unmake_move(){
         Previous_Moves prev = this.previous_states.get(this.previous_states.size()-1);
@@ -130,7 +140,6 @@ public class ChessBoard {
         int type_from = (move >>> 7) & 7;
         int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
-        System.out.println(from+" "+to+" "+type_from+" "+type_to+" "+special);
 
         this.castles = prev.castle_prev;
         this.EP = prev.EP_prev;
@@ -203,7 +212,22 @@ public class ChessBoard {
     }
 
     public boolean isLegal(){
-        return true;
+
+        // Turn is opposite
+        long occupied = this.white_pieces | this.black_pieces;
+        int king_square = Utils.pop_1st_bit(this.board[this.turn^1][5]);
+        long queen_attacks, bishop_attacks, rook_attacks;
+        rook_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.rook_magics);
+        bishop_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.bishop_magics);
+        queen_attacks = rook_attacks | bishop_attacks;
+
+        if((rook_attacks & this.board[this.turn][3]) != 0){
+            return false;
+        }
+        if((bishop_attacks & this.board[this.turn][2]) != 0){
+            return false;
+        }
+        return (queen_attacks & this.board[this.turn][4]) == 0;
     }
 
 
