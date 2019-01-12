@@ -37,7 +37,6 @@ public class Game {
         System.out.println(moves.toString());
         for(int m: moves){
             legal = game.chess.make_move(m);
-            System.out.println(legal);
             if(!legal){
                 game.chess.unmake_move();
             }
