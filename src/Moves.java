@@ -80,11 +80,11 @@ public class Moves {
             else {
                 pseudo_legals = move_bitboards[from];
             }
+            this.attacks[turn][type] |= pseudo_legals;
             if (type == 5){
                 long enemy_attacks = this.enemy_attacks(turn);
                 pseudo_legals = move_bitboards[from] & ~enemy_attacks;
             }
-            this.attacks[turn][type] |= pseudo_legals;
             pseudo_legals &= not_my_pieces;
             while(pseudo_legals != 0L){
                 to = Utils.pop_1st_bit(pseudo_legals);
