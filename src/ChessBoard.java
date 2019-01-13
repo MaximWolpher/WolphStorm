@@ -1,5 +1,3 @@
-import jdk.jshell.execution.Util;
-
 import java.math.BigInteger;
 import java.util.*;
 
@@ -78,7 +76,6 @@ public class ChessBoard {
         Utils.view_bitboard(this.moves.enemy_attacks(this.turn));
     }
 
-
     public boolean make_move(int move){
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
@@ -87,31 +84,22 @@ public class ChessBoard {
         int special = move & 0xf;
         boolean legal = true;
 
-
         int new_cast = this.castles;
         int new_ep = this.EP;
         int new_hmc = this.hmc;
-        long[][] new_attacks = new long[2][6];
-        for(int t=0; t<2; t++){
-            for(int p=0; p<6; p++){
-                new_attacks[t][p] = this.moves.attacks[t][p];
-            }
-        }
 
-        previous_states.add(new Previous_Moves(move, new_cast, new_ep, new_hmc, type_to, new_attacks));
+        previous_states.add(new Previous_Moves(move, new_cast, new_ep, new_hmc, type_to));
 
         String move_type = "Quiet move";
 
         if(special<=1){ // Quiet move
-            this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
         }
         else if(special==4){ // Capture
             move_type = "Capture";
             this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
             this.board[this.turn^1][type_to] ^= (1L<<to);
             this.moves.attacks[this.turn^1][type_to] = 0L;
-
-            this.moves.update_attacks(this, this.turn^1, type_to, this.magics);
         }
         else if(special==3){ // Queen castle
             move_type = "queen castle";
@@ -132,7 +120,6 @@ public class ChessBoard {
             this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
             long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]);
             this.board[this.turn^1][0] ^= ep_pawn;
-            this.moves.update_attacks(this, this.turn^1,0, this.magics);
 
         }
         else if(special > 5){ // Promo
@@ -144,9 +131,6 @@ public class ChessBoard {
                 this.board[this.turn^1][type_to] ^= (1L << to);
             }
         }
-
-        this.moves.update_attacks(this, this.turn, type_from, this.magics);
-
 
         if(type_from==0 || (special&4)==4){
             this.hmc=0;
@@ -182,7 +166,6 @@ public class ChessBoard {
         this.castles = prev.castle_prev;
         this.EP = prev.EP_prev;
         this.hmc = prev.hmc_prev;
-        this.moves.attacks = prev.attacks;
 
         this.turn^=1;
 
@@ -221,7 +204,6 @@ public class ChessBoard {
 
             if((special&4)==4){ // Promo Capture
                 this.board[this.turn^1][type_to] ^= (1L << to);
-
             }
         }
 
@@ -251,24 +233,40 @@ public class ChessBoard {
     }
 
     public boolean isLegal(){
-
-        long occupied = this.white_pieces | this.black_pieces;
         int king_square = Utils.pop_1st_bit(this.board[this.turn][5]);
-        long queen_attacks, bishop_attacks, rook_attacks;
-        rook_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.rook_magics);
-        bishop_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.bishop_magics);
-        queen_attacks = rook_attacks | bishop_attacks;
 
-        if((this.moves.enemy_attacks(this.turn) & this.board[this.turn][5]) != 0){
+        if((this.moves.Knight_Move_List[king_square] & this.board[this.turn^1][1]) != 0){
             return false;
         }
 
+        // King Needed?
+        if((this.moves.King_Move_List[king_square] & this.board[this.turn^1][5]) != 0){
+            return false;
+        }
+
+        long[] pawn_attacks = (this.turn == 0)? this.moves.BlackPawn_Attack_List: this.moves.WhitePawn_Attack_List;
+        if((pawn_attacks[king_square] & this.board[this.turn^1][0]) != 0){
+            return false;
+        }
+
+        // Sliding attacks
+
+        long rook_attacks;
+        long occupied = this.white_pieces | this.black_pieces;
+
+        rook_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.rook_magics);
         if((rook_attacks & this.board[this.turn^1][3]) != 0){
             return false;
         }
+
+        long bishop_attacks;
+        bishop_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.bishop_magics);
         if((bishop_attacks & this.board[this.turn^1][2]) != 0){
             return false;
         }
+
+        long queen_attacks;
+        queen_attacks = rook_attacks | bishop_attacks;
         return (queen_attacks & this.board[this.turn^1][4]) == 0;
     }
 
