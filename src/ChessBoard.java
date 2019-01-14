@@ -80,7 +80,6 @@ public class ChessBoard {
         int type_from = (move >>> 7) & 7;
         int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
-        boolean legal = true;
 
         int new_cast = this.castles;
         int new_ep = this.EP;
@@ -138,7 +137,7 @@ public class ChessBoard {
         update_EP(move);
         update_pieces();
 
-        legal = isLegal();
+        boolean legal = isNotInCheck();
 
         /*if(legal) {
             System.out.println(type_from+" "+parse_move(move)+" "+move_type);
@@ -228,7 +227,7 @@ public class ChessBoard {
         }
     }
 
-    public boolean isLegal(){
+    public boolean isNotInCheck(){
         int king_square = Utils.pop_1st_bit(this.board[this.turn][5]);
         if((this.moves.Knight_Move_List[king_square] & this.board[this.turn^1][1]) != 0){
             return false;
