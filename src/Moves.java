@@ -8,7 +8,6 @@ public class Moves {
     long[] BlackPawn_Move_List = new long[64];
     long[] WhitePawn_Attack_List = new long[64];
     long[] BlackPawn_Attack_List = new long[64];
-    public long[][] attacks = new long[2][6];
 
     void init_static_moves(){
         for(int square=0; square<64; square++){
@@ -27,11 +26,7 @@ public class Moves {
         occupied ^= chess.board[chess.turn^1][5];
         long enemy_pieces = pieces[chess.turn^1];
         long not_my_pieces = ~pieces[chess.turn];
-        for(int type_idx=0; type_idx<6; type_idx++) {
-                for(int to_idx=0; to_idx<64; to_idx++) {
-                    this.attacks[chess.turn][type_idx] = 0L;
-                }
-        }
+
         ArrayList<Integer> all_moves = new ArrayList<>();
 
         all_moves.addAll(EP_move(chess.EP, chess.turn, chess.board, this.WhitePawn_Attack_List, this.BlackPawn_Attack_List, enemy_pieces));
@@ -83,10 +78,11 @@ public class Moves {
             else {
                 pseudo_legals = move_bitboards[from];
             }
-            this.attacks[turn][type] |= pseudo_legals;
+
             if (type == 5){
-                long enemy_attack_map = this.enemy_attacks(turn);
-                pseudo_legals = move_bitboards[from] & ~enemy_attack_map;
+                //long enemy_attack_map = this.enemy_attacks(turn);
+                //pseudo_legals = move_bitboards[from] & ~enemy_attack_map;
+                pseudo_legals = move_bitboards[from];
             }
             pseudo_legals &= not_my_pieces;
             while(pseudo_legals != 0L){
@@ -117,7 +113,6 @@ public class Moves {
             bitboard ^= (1L << from);
             pseudo_legals = move_bitboards[from];
             if(attack){
-                this.attacks[turn][0] |= pseudo_legals;
                 pseudo_legals &= enemy_pieces;
             }
             else{
@@ -153,16 +148,6 @@ public class Moves {
             }
         }
         return moves;
-    }
-
-
-
-    long enemy_attacks(int turn){
-        long enemy_map = 0L;
-        for(int type=0; type<6; type++){
-            enemy_map |= this.attacks[turn^1][type];
-        }
-        return enemy_map;
     }
 
     public ArrayList<Integer> EP_move(int ep_square, int turn, long[][] board,
@@ -202,15 +187,15 @@ public class Moves {
         if(castle_right == 0){
             return moves; // No castle moves
         }
-        long enemy_attack_map = this.enemy_attacks(turn);
+        // TODO CASTLE
         if((castle_right & 1) == 1){    // Queen castle
-            if(((7L << (loc + 1)) & occupied) == 0 && ((7L << loc) & enemy_attack_map) == 0){
+            if(((7L << (loc + 1)) & occupied) == 0 && ((7L << loc) & 1) == 0){
                 // If there is no blocker between king and queen-side rook
                 moves.add(move_integer(0L, loc,0,5,3)); // Encoding for queen castle
             }
         }
         if((castle_right & 2) == 2){    // King castle
-            if(((3L << (loc - 2)) & occupied) == 0 && ((7L << (loc - 2)) & enemy_attack_map) == 0){
+            if(((3L << (loc - 2)) & occupied) == 0 && ((7L << (loc - 2)) & 1) == 0){
                 // If there is no blocker between king and king-side rook
                 moves.add(move_integer(0L, loc, 0, 5, 2)); // Encoding for king castle
             }

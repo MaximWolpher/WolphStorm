@@ -72,9 +72,7 @@ public class ChessBoard {
         return this.moves.generate_moves(this, this.magics);
     }
 
-    public void enemy_attacks(){
-        Utils.view_bitboard(this.moves.enemy_attacks(this.turn));
-    }
+
 
     public boolean make_move(int move){
         int from = (move >>> 16) & 0x3f;
@@ -99,7 +97,6 @@ public class ChessBoard {
             move_type = "Capture";
             this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
             this.board[this.turn^1][type_to] ^= (1L<<to);
-            this.moves.attacks[this.turn^1][type_to] = 0L;
         }
         else if(special==3){ // Queen castle
             move_type = "queen castle";
@@ -141,14 +138,13 @@ public class ChessBoard {
         update_EP(move);
         update_pieces();
 
-        if(type_from != 5){
-            legal = isLegal();
-        }
-        if(legal) {
+        legal = isLegal();
+
+        /*if(legal) {
             System.out.println(type_from+" "+parse_move(move)+" "+move_type);
             System.out.println("Legal?");
             this.enemy_attacks();
-        }
+        }*/
         this.turn^=1;
 
         return legal;
@@ -234,7 +230,6 @@ public class ChessBoard {
 
     public boolean isLegal(){
         int king_square = Utils.pop_1st_bit(this.board[this.turn][5]);
-
         if((this.moves.Knight_Move_List[king_square] & this.board[this.turn^1][1]) != 0){
             return false;
         }
@@ -253,6 +248,7 @@ public class ChessBoard {
 
         long rook_attacks;
         long occupied = this.white_pieces | this.black_pieces;
+
 
         rook_attacks = Bitboards.Sliding_Attacks(occupied, king_square, this.magics.rook_magics);
         if((rook_attacks & this.board[this.turn^1][3]) != 0){

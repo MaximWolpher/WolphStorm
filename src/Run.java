@@ -6,13 +6,11 @@ import java.util.ArrayList;
 public class Run {
     public static void main(String[] args) {
 
-        Game game = new Game("8/2p5/3p4/KP5r/1R3p1k/6P1/4P3/8 b - - 0 1");
+        Game game = new Game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         boolean legal;
 
         game.view_board();
-        System.out.println("Attacks");
-        game.enemy_attacks();
-
+        boolean move_made = false;
         ArrayList<Integer> moves = game.generate_moves();
         for(int m: moves){
             legal = game.make_move(m);
@@ -20,9 +18,13 @@ public class Run {
                 game.unmake_move();
             }
             else {
+                move_made = true;
                 game.view_board();
                 game.unmake_move();
             }
+        }
+        if(!move_made) {
+            System.out.println("CHECKMATE");
         }
     }
 }

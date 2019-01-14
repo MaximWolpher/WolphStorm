@@ -35,8 +35,4 @@ public class Game {
     public void view_board(){
         Utils.view_board(this.chess.board);
     }
-
-    public void enemy_attacks(){
-        this.chess.enemy_attacks();
-    }
 }
