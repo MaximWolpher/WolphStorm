@@ -3,7 +3,7 @@ import java.util.ArrayList;
 public class Perft {
     private Game game;
     public int mate = 0;
-    public int caps = 0;
+    public long caps = 0;
     public int checks = 0;
     public int promos = 0;
     public int castles = 0;
@@ -14,8 +14,8 @@ public class Perft {
         this.game = game;
     }
 
-    private int run_perft(int depth){
-        int nodes = 0;
+    private long run_perft(int depth){
+        long nodes = 0;
         int special;
         boolean move_made = false;
 
@@ -47,8 +47,8 @@ public class Perft {
                         this.checks += 1;
                     }
                 }
-                System.out.println(game.getTurn());
-                game.view_board();
+                //System.out.println(game.getTurn());
+                //game.view_board();
                 nodes += run_perft(depth - 1);
                 game.unmake_move();
                 move_made = true;
@@ -66,10 +66,10 @@ public class Perft {
     }
 
     public static void main(String[] args) {
-        Game game = new Game("1r4qk/8/8/2p3b1/3n4/8/PP1P3P/R3K1NR w KQ - 0 1");
+        Game game = new Game("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
         Perft perft = new Perft();
         perft.setGame(game);
-        int nodes = perft.run_perft(1);
+        long nodes = perft.run_perft(6);
         System.out.println("Nodes: "+nodes);
         System.out.println("Captures: "+perft.caps);
         System.out.println("EP captures: "+perft.ep_caps);

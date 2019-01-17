@@ -134,13 +134,13 @@ public class ChessBoard {
         }
         update_EP(move);
         update_pieces();
-        update_castles(this.turn, type_from, from, special);
+        update_castles(this.turn, type_from, from, special, type_to, to);
 
         boolean legal = isNotInCheck();
 
         if(legal) {
-            System.out.println(type_from+" "+parse_move(move)+" "+move_type);
-            System.out.println(this.castles);
+            //System.out.println(type_from+" "+parse_move(move)+" "+move_type);
+            //System.out.println(this.castles);
         }
         this.turn^=1;
 
@@ -204,19 +204,41 @@ public class ChessBoard {
     }
 
 
-    private void update_castles(int turn, int type_from, int from, int special){
+    private void update_castles(int turn, int type_from, int from, int special, int type_to, int to){
+        int side = turn == 0 ? 3 : 12;
+        int opp_side = turn == 0 ? 12 : 3;
+        if((this.castles & side) != 0) {
+            if (type_from == 5 || special == 2 || special == 3) {
+                // Remove castle rights for side to move if king move or castle-move
+                this.castles &= opp_side;
+            }
+            if (type_from == 3) {
+                this.castles &= castle_keep(from);
+            }
+        }
+        if(((this.castles & opp_side) != 0) & ((special & 4) != 0) & (type_to == 3)){
+            this.castles &= castle_keep(to);
+        }
+    }
 
-        int side = turn == 0? 12: 3;
-        if(type_from == 5) {
-            this.castles &= side;
+    private int castle_keep(int square){
+        int keep = 15;
+        switch (square) {
+            // Rook starting squares
+            case 0:
+                keep = 7;
+                break;
+            case 7:
+                keep = 11;
+                break;
+            case 56:
+                keep = 13;
+                break;
+            case 63:
+                keep = 14;
+                break;
         }
-        if(special == 2 || special == 3) {
-            this.castles &= side;
-        }
-        if(type_from == 3){
-            //TODO
-        }
-
+        return keep;
     }
 
 
