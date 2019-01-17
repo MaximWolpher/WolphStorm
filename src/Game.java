@@ -14,10 +14,6 @@ public class Game {
         this.chess.setMoves(moves);
         this.chess.setMagics(magics);
         this.chess.fen_to_board(fen);
-
-        this.chess.changeTurn();
-        moves.generate_moves(chess, magics);
-        this.chess.changeTurn();
     }
 
     public ArrayList<Integer> generate_moves(){
@@ -38,5 +34,13 @@ public class Game {
 
     public boolean isNotInCheck(){
         return this.chess.isNotInCheck();
+    }
+
+    public int getTurn(){
+        return this.chess.turn;
+    }
+
+    public int getEP(){
+        return this.chess.EP;
     }
 }

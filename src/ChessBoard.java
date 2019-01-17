@@ -101,14 +101,12 @@ public class ChessBoard {
             move_type = "queen castle";
             this.board[this.turn][5] ^= (1L<<from)|(1L<<(from+2));
             this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
-            update_castles(from-4);
 
         }
         else if(special==2){ // King castle
             move_type = "king castle";
             this.board[this.turn][5] ^= (1L<<from)|(1L<<(from-2));
             this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
-            update_castles(from+3);
 
         }
         else if(special==5){ // En Passant
@@ -136,14 +134,14 @@ public class ChessBoard {
         }
         update_EP(move);
         update_pieces();
+        update_castles(this.turn, type_from, from, special);
 
         boolean legal = isNotInCheck();
 
-        /*if(legal) {
+        if(legal) {
             System.out.println(type_from+" "+parse_move(move)+" "+move_type);
-            System.out.println("Legal?");
-            this.enemy_attacks();
-        }*/
+            System.out.println(this.castles);
+        }
         this.turn^=1;
 
         return legal;
@@ -163,7 +161,6 @@ public class ChessBoard {
         this.hmc = prev.hmc_prev;
 
         this.turn^=1;
-
 
         if(special<=1){ // Quiet move
             this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
@@ -207,13 +204,19 @@ public class ChessBoard {
     }
 
 
-    private void update_castles(int pos){
-        switch (pos){
-            case 63:this.castles &= 7;break;
-            case 56:this.castles &= 11;break;
-            case 7:this.castles &= 13;break;
-            case 0:this.castles &= 14;break;
+    private void update_castles(int turn, int type_from, int from, int special){
+
+        int side = turn == 0? 12: 3;
+        if(type_from == 5) {
+            this.castles &= side;
         }
+        if(special == 2 || special == 3) {
+            this.castles &= side;
+        }
+        if(type_from == 3){
+            //TODO
+        }
+
     }
 
 
@@ -455,7 +458,7 @@ public class ChessBoard {
         }
         else{
             char c = s.charAt(0);
-            this.EP =  (int)c-96;
+            this.EP = (8-((int)c-96))+1;
         }
 
     }
