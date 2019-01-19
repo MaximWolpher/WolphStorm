@@ -61,7 +61,7 @@ public class UCI {
         System.out.println("readyok");
     }
     public static void inputUCINewGame(ChessBoard chess) {
-        chess.initiateStandardChess();
+        chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
     public static void inputPosition(String input, ChessBoard chess) {
         String[] string_parts = input.split(" ");

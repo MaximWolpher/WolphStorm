@@ -6,29 +6,35 @@ import java.util.ArrayList;
 public class Run {
     public static void main(String[] args) {
 
-        Game game = new Game("8/8/8/3k4/2p1p3/2PpP3/3P3P/r3K2R w K - 0 1");
-        boolean legal;
-
+        Game game = new Game("8/2k5/8/8/8/7n/8/4K1N1 w - - 0 1");
+        Search search = new Search();
         game.view_board();
 
-        boolean move_made = false;
         ArrayList<Integer> moves = game.generate_moves();
-        for(int m: moves){
-            legal = game.make_move(m);
-            if(!legal){
+        move_class best_move = new move_class(0,0,0);
+        int score;
+        int alpha = -Integer.MAX_VALUE;
+        int beta = Integer.MAX_VALUE;
+        for(int move: moves) {
+
+            boolean legal = game.make_move(move);
+            if (!legal) {
                 game.unmake_move();
             }
             else {
-                move_made = true;
-                game.view_board();
-                System.out.println("");
+                score = search.alphaBeta(game, alpha, beta, 2, 1);
                 game.unmake_move();
+                System.out.println(ChessBoard.parse_move(move) + " " + score);
+                if (score > alpha) {
+                    alpha = score;
+                    best_move = new move_class(move, score, 0);
+                }
             }
         }
-        if(!move_made) {
-            System.out.println("CHECKMATE");
-        }
+        System.out.println("best");
+        System.out.println(ChessBoard.parse_move(best_move.move)+" "+best_move.score);
     }
+
 }
 
 

@@ -43,4 +43,8 @@ public class Game {
     public int getEP(){
         return this.chess.EP;
     }
+
+    public ChessBoard getChess(){
+        return this.chess;
+    }
 }
