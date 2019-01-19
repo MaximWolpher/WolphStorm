@@ -17,12 +17,12 @@ public class test_env {
         System.out.println(Rating.piece_position(game.getChess(),false));*/
         for(int y=0; y<10; y++) {
             long start = System.nanoTime();
-            for (int x = 0; x < 1000; x++) {
-                int nope = fast(x);
+            for (int x = 0; x < 64; x++) {
+                int nope = x%8;
             }
             long endfirst = System.nanoTime();
-            for (int x = 0; x < 1000; x++) {
-                int yes = slow(x);
+            for (int x = 0; x < 64; x++) {
+                int yes = x&7;
             }
             long endend = System.nanoTime();
 

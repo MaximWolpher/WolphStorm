@@ -22,7 +22,7 @@ public class Run {
                 game.unmake_move();
             }
             else {
-                score = search.alphaBeta(game, alpha, beta, 2, 1);
+                score = search.alphaBeta(game, alpha, beta, 1, 1);
                 game.unmake_move();
                 System.out.println(ChessBoard.parse_move(move) + " " + score);
                 if (score > alpha) {

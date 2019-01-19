@@ -2,17 +2,17 @@
 public class Rating {
     public static int piece_diff(ChessBoard chess) {
         int score =
-                Long.bitCount(chess.board[0][0])*150+
-                Long.bitCount(chess.board[0][1])*620+
-                Long.bitCount(chess.board[0][2])*680+
-                Long.bitCount(chess.board[0][3])*1200+
-                Long.bitCount(chess.board[0][4])*2500-
-                Long.bitCount(chess.board[1][0])*150-
-                Long.bitCount(chess.board[1][1])*620-
-                Long.bitCount(chess.board[1][2])*680-
-                Long.bitCount(chess.board[1][3])*1200-
-                Long.bitCount(chess.board[1][4])*2500;
-        return score*((2 * chess.turn) - 1);
+                Long.bitCount(chess.board[1][0])*150+
+                Long.bitCount(chess.board[1][1])*620+
+                Long.bitCount(chess.board[1][2])*680+
+                Long.bitCount(chess.board[1][3])*1200+
+                Long.bitCount(chess.board[1][4])*2500-
+                Long.bitCount(chess.board[0][0])*150-
+                Long.bitCount(chess.board[0][1])*620-
+                Long.bitCount(chess.board[0][2])*680-
+                Long.bitCount(chess.board[0][3])*1200-
+                Long.bitCount(chess.board[0][4])*2500;
+        return score * (1 - (2 * chess.turn));
     }
     public static int piece_position(ChessBoard chess, boolean end_game){
         int score = 0;
@@ -36,7 +36,9 @@ public class Rating {
                     board_t ^= (1L << single);
                     single = 63 - single;
                     single = side == 0 ? single + (7 - (single / 8) * 2) * 8 : single; // faster than bitshift
-                    System.out.println(side+" "+i+" "+single+" "+piece_square[single]);
+
+                    System.out.println(chess.turn+" "+side+" "+i+" "+single+" "+piece_square[single]);
+                    Utils.view_board(chess.board);
                     // Side to move is opponent
                     score = chess.turn == side ? score - piece_square[single] : score + piece_square[single];
                 }
@@ -63,8 +65,8 @@ public class Rating {
 
     public static int eval_func(ChessBoard chess){
         int eval_score = 0;
-        eval_score += piece_diff(chess);
-        //eval_score += piece_position(chess,false);
+        //eval_score += piece_diff(chess);
+        eval_score += piece_position(chess,false);
         //eval_score += is_check(chess);
         //eval_score += castle_eval(chess);
         return eval_score;
