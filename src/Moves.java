@@ -28,10 +28,11 @@ public class Moves {
         long not_my_pieces = ~pieces[chess.turn];
 
         ArrayList<Integer> all_moves = new ArrayList<>();
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][4], new long[0], 4, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][3], new long[0], 3, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][2], new long[0], 2, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][1], this.Knight_Move_List, 1, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
 
-        all_moves.addAll(EP_move(chess.EP, chess.turn, chess.board, this.WhitePawn_Attack_List, this.BlackPawn_Attack_List, enemy_pieces));
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][5], this.King_Move_List, 5, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
-        all_moves.addAll(Castle_Move(occupied, chess.turn, chess.castles, chess.board, magics));
         if(chess.turn == 1){
             all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn, this.WhitePawn_Attack_List, enemy_pieces, occupied, true, chess.board));
             all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn,  this.WhitePawn_Move_List, enemy_pieces, occupied, false, chess.board));
@@ -40,11 +41,9 @@ public class Moves {
             all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn, this.BlackPawn_Attack_List, enemy_pieces, occupied, true, chess.board));
             all_moves.addAll(pawn_moves(chess.board[chess.turn][0], chess.turn, this.BlackPawn_Move_List, enemy_pieces, occupied, false, chess.board));
         }
-
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][1], this.Knight_Move_List, 1, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][2], new long[0], 2, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][3], new long[0], 3, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][4], new long[0], 4, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][5], this.King_Move_List, 5, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(Castle_Move(occupied, chess.turn, chess.castles, chess.board, magics));
+        all_moves.addAll(EP_move(chess.EP, chess.turn, chess.board, this.WhitePawn_Attack_List, this.BlackPawn_Attack_List, enemy_pieces));
 
         return all_moves;
     }
