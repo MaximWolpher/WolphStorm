@@ -43,4 +43,12 @@ public class Game {
     public int getEP(){
         return this.chess.EP;
     }
+
+    public ChessBoard getChess(){
+        return this.chess;
+    }
+
+    public ArrayList<Integer> updateMoves(ArrayList<Integer> moves, int pv){
+        return this.chess.update_moves(moves, pv);
+    }
 }

@@ -2,49 +2,46 @@
 public class Rating {
     public static int piece_diff(ChessBoard chess) {
         int score =
-                Long.bitCount(chess.board[0][0])*150+
-                Long.bitCount(chess.board[0][1])*620+
-                Long.bitCount(chess.board[0][2])*680+
-                Long.bitCount(chess.board[0][3])*1200+
-                Long.bitCount(chess.board[0][4])*2500-
-                Long.bitCount(chess.board[1][0])*150-
-                Long.bitCount(chess.board[1][1])*620-
-                Long.bitCount(chess.board[1][2])*680-
-                Long.bitCount(chess.board[1][3])*1200-
-                Long.bitCount(chess.board[1][4])*2500;
-        return score*(1-(2*chess.turn));
+                Long.bitCount(chess.board[1][0])*150+
+                Long.bitCount(chess.board[1][1])*620+
+                Long.bitCount(chess.board[1][2])*680+
+                Long.bitCount(chess.board[1][3])*1200+
+                Long.bitCount(chess.board[1][4])*2500-
+                Long.bitCount(chess.board[0][0])*150-
+                Long.bitCount(chess.board[0][1])*620-
+                Long.bitCount(chess.board[0][2])*680-
+                Long.bitCount(chess.board[0][3])*1200-
+                Long.bitCount(chess.board[0][4])*2500;
+        return score;
     }
     public static int piece_position(ChessBoard chess, boolean end_game){
         int score = 0;
-        int piece_square[];
-        long single;
+        int[] piece_square;
+        int single;
         long board_t;
         int[] king_w = Constants.KingTable_W;
-        int[] king_b = Constants.KingTable_B;
         if(end_game){
             king_w = Constants.KingTableEndGame_W;
-            king_b = Constants.KingTableEndGame_B;
         }
-        int[][][] tables = {{Constants.PawnTable_W,Constants.KnightTable_W,Constants.BishopTable_W,Constants.RookTable_W,
-                new int[0],king_w},{Constants.PawnTable_B,Constants.KnightTable_B,Constants.BishopTable_B,
-                Constants.RookTable_B,new int[0],king_b}};
+        int[][] tables = {Constants.PawnTable_W,Constants.KnightTable_W,Constants.BishopTable_W,Constants.RookTable_W,
+                new int[0],king_w}; // TODO king_W or new int
+
         for(int side = 0;side<2;side++){
             for(int i = 0;i<6;i++){
                 if(i == 4 ){continue;}
-                piece_square = tables[side][i];
+                piece_square = tables[i];
                 board_t = chess.board[side][i];
-                single = board_t & ~(board_t-1);
-                while(single!=0) {
-                    int tz = Long.numberOfTrailingZeros(single);
-
-                    score += piece_square[tz];
-                    board_t &= ~single;
-                    single = board_t&~(board_t-1);
+                while(board_t != 0) {
+                    single = Utils.pop_1st_bit(board_t);
+                    board_t ^= (1L << single);
+                    single = 63 - single;
+                    single = side == 0 ? single + (7 - (single / 8) * 2) * 8 : single; // faster than bitshift
+                    // Side to move is opponent
+                    score = chess.turn == side ? score - piece_square[single] : score + piece_square[single];
                 }
             }
         }
-
-        return score*(1-(2*chess.turn));
+        return score;
     }
 
     public static int pawn_eval(long board[]){
@@ -62,13 +59,13 @@ public class Rating {
     }
 
 
-    public static int eval_func(ChessBoard chess, boolean end_game){
+    public static int eval_func(ChessBoard chess){
         int eval_score = 0;
         eval_score += piece_diff(chess);
-        //eval_score += piece_position(chess,end_game);
+        eval_score += piece_position(chess,false);
         //eval_score += is_check(chess);
         //eval_score += castle_eval(chess);
-        return eval_score*(1-(2*chess.turn));
+        return eval_score * (2 * chess.turn - 1);
     }
 
 }

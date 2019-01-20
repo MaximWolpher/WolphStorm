@@ -43,9 +43,7 @@ public class UCI {
             {
                 inputPrint();
             }
-            else if(inputString.equals("quit")){
-                break;
-            }
+
         }
     }
     public static void inputUCI() {
@@ -61,16 +59,13 @@ public class UCI {
         System.out.println("readyok");
     }
     public static void inputUCINewGame(ChessBoard chess) {
-        chess.initiateStandardChess();
+        chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
     public static void inputPosition(String input, ChessBoard chess) {
         String[] string_parts = input.split(" ");
         if (string_parts[1].equals("startpos")) {
             chess.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            //chess.fen_to_board("2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1");
         }
-
-
     }
 
 

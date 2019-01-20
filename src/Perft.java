@@ -66,10 +66,10 @@ public class Perft {
     }
 
     public static void main(String[] args) {
-        Game game = new Game("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
+        Game game = new Game("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
         Perft perft = new Perft();
         perft.setGame(game);
-        long nodes = perft.run_perft(6);
+        long nodes = perft.run_perft(4);
         System.out.println("Nodes: "+nodes);
         System.out.println("Captures: "+perft.caps);
         System.out.println("EP captures: "+perft.ep_caps);

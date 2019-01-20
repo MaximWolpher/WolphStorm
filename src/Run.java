@@ -1,34 +1,30 @@
-import java.util.ArrayList;
-
 /**
  * Created by maxim on 04/03/2017
  */
 public class Run {
     public static void main(String[] args) {
 
-        Game game = new Game("8/8/8/3k4/2p1p3/2PpP3/3P3P/r3K2R w K - 0 1");
-        boolean legal;
+        Game game = new Game("qrb5/rk1p2K1/p2P4/Pp6/1N2n3/6p1/5nB1/6b1 w - - 0 1");
+        Search search = new Search();
 
         game.view_board();
-
-        boolean move_made = false;
-        ArrayList<Integer> moves = game.generate_moves();
-        for(int m: moves){
-            legal = game.make_move(m);
-            if(!legal){
-                game.unmake_move();
-            }
-            else {
-                move_made = true;
-                game.view_board();
-                System.out.println("");
-                game.unmake_move();
-            }
+        System.out.println("Startboard");
+        System.out.println(" ");
+        int pv_move = 0;
+        for(int iter=1; iter<=10; iter++) {
+            int alpha = -Integer.MAX_VALUE;
+            int beta = Integer.MAX_VALUE;
+            long start = System.nanoTime();
+            //search.alphaBeta(game, alpha, beta, iter, 0);
+            search.pvSearch(game, alpha, beta, iter, 0, pv_move);
+            pv_move = search.best_move.move;
+            System.out.println("Depth: "+iter+" Move: "+ChessBoard.parse_move(pv_move) + " Score: " + search.best_move.score);
+            //System.out.println("time taken: " + (System.nanoTime() - start) / (1000000000) + " seconds");
         }
-        if(!move_made) {
-            System.out.println("CHECKMATE");
-        }
+        game.make_move(search.best_move.move);
+        game.view_board();
     }
+
 }
 
 

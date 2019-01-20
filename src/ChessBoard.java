@@ -31,37 +31,16 @@ public class ChessBoard {
     public int game_over = -1; //{-1 = not over, 1 = white win, 0 = black win, 2 = draw}
     private ArrayList<Previous_Moves> previous_states = new ArrayList<>();
 
-    public void initiateStandardChess() {
-        String chessBoard[][]={
-
-                /*{"r","n","b","q","k","b","n","r"},
-                {"p","p","p","p","p","p","p","p"},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {"P","P","P","P","P","P","P","P"},
-                {"R","N","B","Q","K","B","N","R"}};*/
-
-                {" "," "," "," "," ","k"," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," ","p","P"," "},
-                {" "," "," "," "," "," "," "," "},
-                {" "," "," "," "," "," "," "," "},
-                {" ","R","Q","K"," "," "," "," "}};
-
-        //arrayToBitboards(chessBoard);
-        fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        }
-
     private void update_pieces(){
         this.black_pieces = this.board[0][0]|this.board[0][1]|this.board[0][2]|this.board[0][3]|
                 this.board[0][4]|this.board[0][5];
         this.white_pieces = this.board[1][0]|this.board[1][1]|this.board[1][2]|this.board[1][3]|
                 this.board[1][4]|this.board[1][5];
 
+    }
+
+    public ArrayList<Integer> update_moves(ArrayList<Integer> moves, int pv){
+        return this.moves.order_moves(moves, pv);
     }
 
     public void changeTurn(){
@@ -71,7 +50,6 @@ public class ChessBoard {
     public ArrayList<Integer> generate_moves(){
         return this.moves.generate_moves(this, this.magics);
     }
-
 
 
     public boolean make_move(int move){
@@ -84,47 +62,9 @@ public class ChessBoard {
         int new_cast = this.castles;
         int new_ep = this.EP;
         int new_hmc = this.hmc;
-
         previous_states.add(new Previous_Moves(move, new_cast, new_ep, new_hmc, type_to));
 
-        String move_type = "Quiet move";
-
-        if(special<=1){ // Quiet move
-            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
-        }
-        else if(special==4){ // Capture
-            move_type = "Capture";
-            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
-            this.board[this.turn^1][type_to] ^= (1L<<to);
-        }
-        else if(special==3){ // Queen castle
-            move_type = "queen castle";
-            this.board[this.turn][5] ^= (1L<<from)|(1L<<(from+2));
-            this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
-
-        }
-        else if(special==2){ // King castle
-            move_type = "king castle";
-            this.board[this.turn][5] ^= (1L<<from)|(1L<<(from-2));
-            this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
-
-        }
-        else if(special==5){ // En Passant
-            move_type = "en passant";
-            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
-            long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]);
-            this.board[this.turn^1][0] ^= ep_pawn;
-
-        }
-        else if(special > 5){ // Promo
-            move_type = "promo";
-            this.board[this.turn][type_from] ^= (1L<<from);
-            this.board[this.turn][((special&3)+1)] ^= (1L<<to);
-
-            if((special&4)==4){ // Promo Capture
-                this.board[this.turn^1][type_to] ^= (1L << to);
-            }
-        }
+        update_moves(from, to, type_from, type_to, special);
 
         if(type_from==0 || (special&4)==4){
             this.hmc=0;
@@ -138,10 +78,6 @@ public class ChessBoard {
 
         boolean legal = isNotInCheck();
 
-        if(legal) {
-            //System.out.println(type_from+" "+parse_move(move)+" "+move_type);
-            //System.out.println(this.castles);
-        }
         this.turn^=1;
 
         return legal;
@@ -162,47 +98,66 @@ public class ChessBoard {
 
         this.turn^=1;
 
-        if(special<=1){ // Quiet move
-            this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
-
-        }
-        else if(special==4){ // Capture
-
-            this.board[this.turn][type_from]^=(1L<<from)|(1L<<to);
-            this.board[this.turn^1][type_to] ^= (1L<<to);
-
-
-        }
-        else if(special==3){ // Queen castle
-            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(from+2));
-            this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
-
-        }
-        else if(special==2){ // King castle
-            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(from-2));
-            this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
-
-        }
-        else if(special==5){ // En Passant
-            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
-            long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]);
-            this.board[this.turn^1][0] ^= ep_pawn;
-
-
-        }
-        else if(special>5){ // Promo
-            this.board[this.turn][type_from] ^= (1L<<from);
-            this.board[this.turn][((special&3)+1)] ^= (1L<<to);
-
-            if((special&4)==4){ // Promo Capture
-                this.board[this.turn^1][type_to] ^= (1L << to);
-            }
-        }
+        update_moves(from, to, type_from, type_to, special);
 
         previous_states.remove(previous_states.size()-1);
         update_pieces();
     }
 
+    private void update_moves(int from, int to, int type_from, int type_to, int special){
+        if(special<=1){ // Quiet move
+            this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
+        }
+        else if(special==4){ // Capture
+            update_capture(from, to, type_from, type_to);
+
+        }
+        else if(special==3){ // Queen castle
+            update_queen_castle(from);
+
+        }
+        else if(special==2){ // King castle
+            update_king_castle(from);
+
+        }
+        else if(special==5){ // En Passant
+            update_EP_move(from, to, type_from);
+
+        }
+        else if(special > 5){ // Promo
+            update_promo(from, to, type_from, type_to, special);
+        }
+    }
+
+    private void update_promo(int from, int to, int type_from, int type_to, int special){
+        this.board[this.turn][type_from] ^= (1L<<from);
+        this.board[this.turn][((special&3)+1)] ^= (1L<<to);
+
+        if((special&4)==4){ // Promo Capture
+            this.board[this.turn^1][type_to] ^= (1L << to);
+        }
+    }
+
+    private void update_EP_move(int from, int to, int type_from){
+        this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
+        long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]); // TODO speed test &7 vs %8
+        this.board[this.turn^1][0] ^= ep_pawn;
+    }
+
+    private void update_king_castle(int from){
+        this.board[this.turn][5] ^= (1L<<from)|(1L<<(from-2));
+        this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
+    }
+
+    private void update_queen_castle(int from){
+        this.board[this.turn][5] ^= (1L<<from)|(1L<<(from+2));
+        this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
+    }
+
+    private void update_capture(int from, int to, int type_from, int type_to){
+        this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
+        this.board[this.turn^1][type_to] ^= (1L<<to);
+    }
 
     private void update_castles(int turn, int type_from, int from, int special, int type_to, int to){
         int side = turn == 0 ? 3 : 12;
@@ -297,6 +252,8 @@ public class ChessBoard {
         String parsed_move = "";
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
+        int type_from = (move >>> 7) & 7;
+        int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
         //From
         parsed_move+=ranks[ranks.length - (1 + (from&7))];
