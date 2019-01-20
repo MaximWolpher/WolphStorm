@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class Search {
     move_class best_move;
-    private static final int MATE_SCORE = 9999999;
+    private static final int MATE_SCORE = 999999;
 
     int alphaBeta(Game game, int alpha, int beta, int depthleft, int ply) {
         if( depthleft == 0 ) {
