@@ -70,7 +70,7 @@ public class ChessBoard {
 
     public void changeTurn(){
         this.turn ^= 1;
-        //this.zobrist_key ^= this.zobrist_turn;
+        this.zobrist_key ^= this.zobrist_turn;
     }
 
     public ArrayList<Integer> generate_moves(){
@@ -169,24 +169,44 @@ public class ChessBoard {
         long ep_pawn = (Constants.FILE_MASKS[to % 8] & Constants.RANK_MASKS[from / 8]); // TODO speed test &7 vs %8
         this.board[this.turn^1][0] ^= ep_pawn;
 
-        //this.zobrist_key ^= this.zobrist_table[this.turn][type_from][from];
-        //this.zobrist_key ^= this.zobrist_table[this.turn][type_from][to];
-        //this.zobrist_key ^= this.zobrist_table[this.turn^1][0][1]; // TODO not 1
+        int ep_loc = Utils.pop_1st_bit(ep_pawn);
+        updateZobrist(this.turn, type_from, from);
+        updateZobrist(this.turn, type_from, to);
+        updateZobrist(this.turn^1, 0, ep_loc);
     }
 
     private void update_king_castle(int from){
         this.board[this.turn][5] ^= (1L<<from)|(1L<<(from-2));
         this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
+
+        updateZobrist(this.turn, 5, from);
+        updateZobrist(this.turn, 5, from - 2);
+        updateZobrist(this.turn, 3, from - 3);
+        updateZobrist(this.turn, 3, from - 1);
     }
 
     private void update_queen_castle(int from){
         this.board[this.turn][5] ^= (1L<<from)|(1L<<(from+2));
         this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
+
+        updateZobrist(this.turn, 5, from);
+        updateZobrist(this.turn, 5, from + 2);
+        updateZobrist(this.turn, 3, from + 4);
+        updateZobrist(this.turn, 3, from + 1);
     }
 
     private void update_capture(int from, int to, int type_from, int type_to){
         this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
         this.board[this.turn^1][type_to] ^= (1L<<to);
+
+
+        updateZobrist(this.turn, type_from, from);
+        updateZobrist(this.turn, type_from, to);
+        updateZobrist(this.turn^1, type_to, to);
+    }
+
+    private void updateZobrist(int side, int piece, int square){
+        this.zobrist_key ^= this.zobrist_table[side][piece][square];
     }
 
     private void update_castles(int type_from, int from, int special, int type_to, int to){
