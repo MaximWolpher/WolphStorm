@@ -39,6 +39,10 @@ public class ChessBoard {
 
     }
 
+    public ArrayList<Integer> update_moves(ArrayList<Integer> moves, int pv){
+        return this.moves.order_moves(moves, pv);
+    }
+
     public void changeTurn(){
         this.turn ^= 1;
     }

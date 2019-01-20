@@ -282,5 +282,12 @@ public class Moves {
         return move_int;
     }
 
+    public ArrayList<Integer> order_moves(ArrayList<Integer> moves, int pv){
+        if(pv != 0){
+            moves.remove(moves.indexOf(pv));
+            moves.add(0, pv);
+        }
+        return moves;
+    }
 
 }
