@@ -3,10 +3,10 @@ import java.util.HashMap;
 public class TranspositionTable {
     private HashMap<Integer, Transposition> hash_table;
     private int size = 1<<20;
-    final int hashEXACT = 0;
-    final int hashALPHA = 1;
-    final int hashBETA = 2;
-    final int valUNKNOWN = 2345678; //larger than mate
+    public static final int hashEXACT = 0;
+    public static final int hashALPHA = 1;
+    public static final int hashBETA = 2;
+    public static final int valUNKNOWN = 2345678; //larger than mate
 
 
     public TranspositionTable(){
@@ -15,7 +15,7 @@ public class TranspositionTable {
     }
 
     public int ProbeHash(Game game, int depth, int alpha, int beta){
-        long zobrist_key = 1L;
+        long zobrist_key = game.getZobrist();
         int zobrist_idx = (int)(zobrist_key % this.size);
         Transposition hash = this.hash_table.get(zobrist_idx);
 
@@ -36,8 +36,8 @@ public class TranspositionTable {
         return valUNKNOWN;
     }
 
-    public void RecordHash(int depth, int val, int hashf, MoveClass best_move) {
-        long zobrist_key = 1L;
+    public void RecordHash(Game game, int depth, int val, int hashf, MoveClass best_move) {
+        long zobrist_key = game.getZobrist();
         int zobrist_idx = (int)(zobrist_key % this.size);
         Transposition hash = this.hash_table.get(zobrist_idx);
 

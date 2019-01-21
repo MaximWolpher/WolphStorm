@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class Game {
     private ChessBoard chess;
+    private TranspositionTable transposition_table;
 
     public Game(String fen) {
 
@@ -15,6 +16,8 @@ public class Game {
         this.chess.setMagics(magics);
         this.chess.fen_to_board(fen);
         this.chess.init_zobrist();
+
+        this.transposition_table = new TranspositionTable();
     }
 
     public ArrayList<Integer> generate_moves(){
@@ -55,5 +58,9 @@ public class Game {
 
     public long getZobrist(){
         return this.chess.zobrist_key;
+    }
+
+    public TranspositionTable getTransTable(){
+        return this.transposition_table;
     }
 }
