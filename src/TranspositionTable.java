@@ -13,25 +13,37 @@ public class TranspositionTable {
         // trying loadFactor > 1.0f to not rehash
         this.hash_table = new HashMap<>(this.size,1.1f);
     }
+    public MoveClass getBestMove(Game game){
+        long zobrist_key = game.getZobrist();
+        int zobrist_idx = (int)(zobrist_key % this.size);
+        Transposition hash = this.hash_table.getOrDefault(zobrist_idx, null);
+        if(hash != null){
+            if(hash.key == zobrist_key){
+                return hash.best_move;
+            }
+        }
+        return null;
+    }
 
     public int ProbeHash(Game game, int depth, int alpha, int beta){
         long zobrist_key = game.getZobrist();
         int zobrist_idx = (int)(zobrist_key % this.size);
         Transposition hash = this.hash_table.get(zobrist_idx);
-
-        if (hash.key == zobrist_key){
-            if (hash.depth >= depth) {
-                if (hash.flag == hashEXACT){
-                    return hash.value;
+        if(hash != null) {
+            if (hash.key == zobrist_key) {
+                if (hash.depth >= depth) {
+                    if (hash.flag == hashEXACT) {
+                        return hash.value;
+                    }
+                    if ((hash.flag == hashALPHA) && (hash.value <= alpha)) {
+                        return alpha;
+                    }
+                    if ((hash.flag == hashBETA) && (hash.value >= beta)) {
+                        return beta;
+                    }
                 }
-                if ((hash.flag == hashALPHA) && (hash.value <= alpha)){
-                    return alpha;
-                }
-                if ((hash.flag == hashBETA) && (hash.value >= beta)){
-                    return beta;
-                }
+                // WHAT? RememberBestMove();
             }
-            // WHAT? RememberBestMove();
         }
         return valUNKNOWN;
     }
@@ -39,12 +51,8 @@ public class TranspositionTable {
     public void RecordHash(Game game, int depth, int val, int hashf, MoveClass best_move) {
         long zobrist_key = game.getZobrist();
         int zobrist_idx = (int)(zobrist_key % this.size);
-        Transposition hash = this.hash_table.get(zobrist_idx);
 
-        hash.key = zobrist_key;
-        hash.best_move = best_move;
-        hash.value = val;
-        hash.flag = hashf;
-        hash.depth = depth;
+        Transposition hash = new Transposition(zobrist_key, depth, hashf, val, best_move);
+        this.hash_table.put(zobrist_idx, hash);
     }
 }
