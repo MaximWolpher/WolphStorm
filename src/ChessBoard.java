@@ -9,6 +9,11 @@ public class ChessBoard {
     public long[][] board = {{0L,0L,0L,0L,0L,0L}, {0L,0L,0L,0L,0L,0L}};
     public long white_pieces;
     public long black_pieces;
+    public long[][][] zobrist_table;
+    public long zobrist_key;
+    private long zobrist_turn;
+    private long[] zobrist_castles = new long[16];
+    private long[] zobrist_ep = new long[9];
 
     public void setMagics(Magics magics) {
         this.magics = magics;
@@ -29,14 +34,50 @@ public class ChessBoard {
     public int hmc = 0; //half move clock
 
     public int game_over = -1; //{-1 = not over, 1 = white win, 0 = black win, 2 = draw}
-    private ArrayList<Previous_Moves> previous_states = new ArrayList<>();
+    private ArrayList<PreviousMoves> previous_states = new ArrayList<>();
+
+    public ChessBoard() {
+        this.zobrist_key = 0L;
+        this.zobrist_table = new long[2][6][64];
+
+        for(int side=0; side<2; side++) {
+            for(int piece=0; piece<6; piece++) {
+                for(int square=0; square<64; square++) {
+                    this.zobrist_table[side][piece][square] = Magics.random_long();
+                }
+            }
+        }
+        for(int cast=0; cast<4; cast++){
+            this.zobrist_castles[cast] = Magics.random_long();
+        }
+        for(int epidx=0; epidx<4; epidx++){
+            this.zobrist_ep[epidx] = Magics.random_long();
+        }
+        this.zobrist_turn = Magics.random_long();
+    }
+
+    public void init_zobrist(){
+        for(int side=0; side<2; side++){
+            for(int piece=0; piece<6; piece++){
+                long board = this.board[side][piece]; // TODO does copy?
+                while(board != 0){
+                    int loc = Utils.pop_1st_bit(board);
+                    board ^= (1L << loc);
+                    this.zobrist_key ^= this.zobrist_table[side][piece][loc];
+                }
+            }
+        }
+        this.zobrist_key ^= this.zobrist_ep[this.EP];
+        this.zobrist_key ^= this.zobrist_castles[this.castles];
+    }
+
+
 
     private void update_pieces(){
         this.black_pieces = this.board[0][0]|this.board[0][1]|this.board[0][2]|this.board[0][3]|
                 this.board[0][4]|this.board[0][5];
         this.white_pieces = this.board[1][0]|this.board[1][1]|this.board[1][2]|this.board[1][3]|
                 this.board[1][4]|this.board[1][5];
-
     }
 
     public ArrayList<Integer> update_moves(ArrayList<Integer> moves, int pv){
@@ -45,6 +86,7 @@ public class ChessBoard {
 
     public void changeTurn(){
         this.turn ^= 1;
+        this.zobrist_key ^= this.zobrist_turn;
     }
 
     public ArrayList<Integer> generate_moves(){
@@ -62,29 +104,32 @@ public class ChessBoard {
         int new_cast = this.castles;
         int new_ep = this.EP;
         int new_hmc = this.hmc;
-        previous_states.add(new Previous_Moves(move, new_cast, new_ep, new_hmc, type_to));
+        previous_states.add(new PreviousMoves(move, new_cast, new_ep, new_hmc, type_to));
 
         update_moves(from, to, type_from, type_to, special);
 
-        if(type_from==0 || (special&4)==4){
-            this.hmc=0;
+        if(type_from == 0 || (special & 4) == 4){
+            this.hmc = 0;
         }
         else {
             this.hmc++;
         }
         update_EP(move);
         update_pieces();
-        update_castles(this.turn, type_from, from, special, type_to, to);
+        update_castles(type_from, from, special, type_to, to);
+
+        specialZobrist(this.castles, this.EP);
 
         boolean legal = isNotInCheck();
 
-        this.turn^=1;
+        changeTurn();
 
         return legal;
     }
 
+
     public void unmake_move(){
-        Previous_Moves prev = this.previous_states.get(this.previous_states.size()-1);
+        PreviousMoves prev = this.previous_states.get(this.previous_states.size()-1);
         int move = prev.move_prev;
         int from = (move >>> 16) & 0x3f;
         int to = (move >>> 10) & 0x3f;
@@ -92,11 +137,13 @@ public class ChessBoard {
         int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
 
+        specialZobrist(this.castles, this.EP);
+
         this.castles = prev.castle_prev;
         this.EP = prev.EP_prev;
         this.hmc = prev.hmc_prev;
 
-        this.turn^=1;
+        changeTurn();
 
         update_moves(from, to, type_from, type_to, special);
 
@@ -107,6 +154,9 @@ public class ChessBoard {
     private void update_moves(int from, int to, int type_from, int type_to, int special){
         if(special<=1){ // Quiet move
             this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
+
+            updateZobrist(this.turn, type_from, from);
+            updateZobrist(this.turn, type_from, to);
         }
         else if(special==4){ // Capture
             update_capture(from, to, type_from, type_to);
@@ -129,39 +179,75 @@ public class ChessBoard {
         }
     }
 
+
     private void update_promo(int from, int to, int type_from, int type_to, int special){
         this.board[this.turn][type_from] ^= (1L<<from);
         this.board[this.turn][((special&3)+1)] ^= (1L<<to);
 
+        updateZobrist(this.turn, type_from, from);
+        updateZobrist(this.turn, (special & 3) + 1, to);
+
         if((special&4)==4){ // Promo Capture
             this.board[this.turn^1][type_to] ^= (1L << to);
+            updateZobrist(this.turn^1, type_to, to);
         }
     }
 
     private void update_EP_move(int from, int to, int type_from){
         this.board[this.turn][type_from] ^= (1L<<from)|(1L<<(to));
-        long ep_pawn = (Constants.FILE_MASKS[to%8]& Constants.RANK_MASKS[from/8]); // TODO speed test &7 vs %8
+        long ep_pawn = (Constants.FILE_MASKS[to % 8] & Constants.RANK_MASKS[from / 8]); // TODO speed test &7 vs %8
         this.board[this.turn^1][0] ^= ep_pawn;
+
+        int ep_loc = Utils.pop_1st_bit(ep_pawn);
+
+        updateZobrist(this.turn, type_from, from);
+        updateZobrist(this.turn, type_from, to);
+        updateZobrist(this.turn^1, 0, ep_loc);
     }
 
     private void update_king_castle(int from){
         this.board[this.turn][5] ^= (1L<<from)|(1L<<(from-2));
         this.board[this.turn][3] ^= (1L<<(from-3))|(1L<<(from-1));
+
+        updateZobrist(this.turn, 5, from);
+        updateZobrist(this.turn, 5, from - 2);
+        updateZobrist(this.turn, 3, from - 3);
+        updateZobrist(this.turn, 3, from - 1);
     }
 
     private void update_queen_castle(int from){
         this.board[this.turn][5] ^= (1L<<from)|(1L<<(from+2));
         this.board[this.turn][3] ^= (1L<<(from+4))|(1L<<(from+1));
+
+        updateZobrist(this.turn, 5, from);
+        updateZobrist(this.turn, 5, from + 2);
+        updateZobrist(this.turn, 3, from + 4);
+        updateZobrist(this.turn, 3, from + 1);
     }
 
     private void update_capture(int from, int to, int type_from, int type_to){
         this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
         this.board[this.turn^1][type_to] ^= (1L<<to);
+
+
+        updateZobrist(this.turn, type_from, from);
+        updateZobrist(this.turn, type_from, to);
+        updateZobrist(this.turn^1, type_to, to);
     }
 
-    private void update_castles(int turn, int type_from, int from, int special, int type_to, int to){
-        int side = turn == 0 ? 3 : 12;
-        int opp_side = turn == 0 ? 12 : 3;
+    private void updateZobrist(int side, int piece, int square){
+        this.zobrist_key ^= this.zobrist_table[side][piece][square];
+    }
+
+    private void specialZobrist(int castles, int EP){
+        this.zobrist_key ^= this.zobrist_castles[castles];
+        this.zobrist_key ^= this.zobrist_ep[EP];
+
+    }
+
+    private void update_castles(int type_from, int from, int special, int type_to, int to){
+        int side = this.turn == 0 ? 3 : 12;
+        int opp_side = this.turn == 0 ? 12 : 3;
         if((this.castles & side) != 0) {
             if (type_from == 5 || special == 2 || special == 3) {
                 // Remove castle rights for side to move if king move or castle-move
@@ -267,7 +353,7 @@ public class ChessBoard {
             parsed_move+=promos[promo_piece];
         }
         else if(special == 2){
-            // Short Castle zero or O??
+            // TODO Short Castle 0 or O??
             parsed_move = "O-O";
         }
         else if(special == 3){

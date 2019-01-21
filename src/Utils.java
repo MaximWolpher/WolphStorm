@@ -54,7 +54,7 @@ public class Utils {
 
     public static int pop_1st_bit(long bb) {
         long b = bb ^ (bb - 1);
-        long fold = (b & 0xffffffff) ^ (b >>> 32); // TODO: need the "and"?
+        long fold = b ^ (b >>> 32); // TODO: need the "and"?
         return Constants.BitTable[(int) (fold * 0x783a9b23) >>> 26];
     }
 }
