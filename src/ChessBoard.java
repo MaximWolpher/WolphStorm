@@ -159,8 +159,12 @@ public class ChessBoard {
         this.board[this.turn][type_from] ^= (1L<<from);
         this.board[this.turn][((special&3)+1)] ^= (1L<<to);
 
+        updateZobrist(this.turn, type_from, from);
+        updateZobrist(this.turn, (special & 3) + 1, to);
+
         if((special&4)==4){ // Promo Capture
             this.board[this.turn^1][type_to] ^= (1L << to);
+            updateZobrist(this.turn^1, type_to, to);
         }
     }
 
@@ -170,6 +174,7 @@ public class ChessBoard {
         this.board[this.turn^1][0] ^= ep_pawn;
 
         int ep_loc = Utils.pop_1st_bit(ep_pawn);
+
         updateZobrist(this.turn, type_from, from);
         updateZobrist(this.turn, type_from, to);
         updateZobrist(this.turn^1, 0, ep_loc);
