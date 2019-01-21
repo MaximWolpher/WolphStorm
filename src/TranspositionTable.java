@@ -36,7 +36,7 @@ public class TranspositionTable {
         return valUNKNOWN;
     }
 
-    public void RecordHash(int depth, int val, int hashf, move_class best_move) {
+    public void RecordHash(int depth, int val, int hashf, MoveClass best_move) {
         long zobrist_key = 1L;
         int zobrist_idx = (int)(zobrist_key % this.size);
         Transposition hash = this.hash_table.get(zobrist_idx);

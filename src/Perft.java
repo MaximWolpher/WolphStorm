@@ -1,3 +1,4 @@
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Perft {
@@ -69,7 +70,12 @@ public class Perft {
         Game game = new Game("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
         Perft perft = new Perft();
         perft.setGame(game);
-        long nodes = perft.run_perft(4);
+        System.out.println("Zobrist first: " + game.getZobrist());
+        long start = System.nanoTime();
+        long nodes = perft.run_perft(5);
+        System.out.println("Zobrist after: "+ game.getZobrist());
+        System.out.println("Time taken: " + (System.nanoTime() - start) / (1e9) + " seconds");
+        System.out.println("Nodes per second: " + (nodes / ((System.nanoTime() - start) / (1e3))) + " Mil Nodes/s");
         System.out.println("Nodes: "+nodes);
         System.out.println("Captures: "+perft.caps);
         System.out.println("EP captures: "+perft.ep_caps);

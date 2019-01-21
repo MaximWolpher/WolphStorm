@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 
 public class Search {
-    move_class best_move;
-    private static final int MATE_SCORE = 999999;
+    MoveClass best_move;
+    private static final int MATE_SCORE = 9999999;
 
     int alphaBeta(Game game, int alpha, int beta, int depthleft, int ply) {
         if( depthleft == 0 ) {
@@ -24,7 +24,7 @@ public class Search {
                 }
                 if (score > alpha) {
                     if(ply == 0){
-                        this.best_move = new move_class(m, score, ply);
+                        this.best_move = new MoveClass(m, score, ply);
                     }
                     alpha = score; // alpha acts like max in MiniMax
                 }
@@ -69,7 +69,7 @@ public class Search {
                     alpha = score;
                     bSearchPv = false;
                     if(ply == 0){
-                        this.best_move = new move_class(m, score, ply);
+                        this.best_move = new MoveClass(m, score, ply);
                     }
                 }
             }
