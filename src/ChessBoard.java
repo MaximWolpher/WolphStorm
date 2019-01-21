@@ -12,8 +12,8 @@ public class ChessBoard {
     public long[][][] zobrist_table;
     public long zobrist_key;
     private long zobrist_turn;
-    private long[] zobrist_castles = new long[4];
-    private long[] zobrist_ep = new long[8];
+    private long[] zobrist_castles = new long[16];
+    private long[] zobrist_ep = new long[9];
 
     public void setMagics(Magics magics) {
         this.magics = magics;
@@ -43,7 +43,6 @@ public class ChessBoard {
         for(int side=0; side<2; side++) {
             for(int piece=0; piece<6; piece++) {
                 for(int square=0; square<64; square++) {
-
                     this.zobrist_table[side][piece][square] = Magics.random_long();
                 }
             }
@@ -54,7 +53,24 @@ public class ChessBoard {
         for(int epidx=0; epidx<4; epidx++){
             this.zobrist_ep[epidx] = Magics.random_long();
         }
+        this.zobrist_turn = Magics.random_long();
     }
+
+    public void init_zobrist(){
+        for(int side=0; side<2; side++){
+            for(int piece=0; piece<6; piece++){
+                long board = this.board[side][piece]; // TODO does copy?
+                while(board != 0){
+                    int loc = Utils.pop_1st_bit(board);
+                    board ^= (1L << loc);
+                    this.zobrist_key ^= this.zobrist_table[side][piece][loc];
+                }
+            }
+        }
+        this.zobrist_key ^= this.zobrist_ep[this.EP];
+        this.zobrist_key ^= this.zobrist_castles[this.castles];
+    }
+
 
 
     private void update_pieces(){
@@ -92,8 +108,8 @@ public class ChessBoard {
 
         update_moves(from, to, type_from, type_to, special);
 
-        if(type_from==0 || (special&4)==4){
-            this.hmc=0;
+        if(type_from == 0 || (special & 4) == 4){
+            this.hmc = 0;
         }
         else {
             this.hmc++;
@@ -102,12 +118,15 @@ public class ChessBoard {
         update_pieces();
         update_castles(type_from, from, special, type_to, to);
 
+        specialZobrist(this.castles, this.EP);
+
         boolean legal = isNotInCheck();
 
         changeTurn();
 
         return legal;
     }
+
 
     public void unmake_move(){
         PreviousMoves prev = this.previous_states.get(this.previous_states.size()-1);
@@ -117,6 +136,8 @@ public class ChessBoard {
         int type_from = (move >>> 7) & 7;
         int type_to = (move >>> 4) & 7;
         int special = move & 0xf;
+
+        specialZobrist(this.castles, this.EP);
 
         this.castles = prev.castle_prev;
         this.EP = prev.EP_prev;
@@ -133,6 +154,9 @@ public class ChessBoard {
     private void update_moves(int from, int to, int type_from, int type_to, int special){
         if(special<=1){ // Quiet move
             this.board[this.turn][type_from] ^= (1L<<from)|(1L<<to);
+
+            updateZobrist(this.turn, type_from, from);
+            updateZobrist(this.turn, type_from, to);
         }
         else if(special==4){ // Capture
             update_capture(from, to, type_from, type_to);
@@ -154,6 +178,7 @@ public class ChessBoard {
             update_promo(from, to, type_from, type_to, special);
         }
     }
+
 
     private void update_promo(int from, int to, int type_from, int type_to, int special){
         this.board[this.turn][type_from] ^= (1L<<from);
@@ -212,6 +237,12 @@ public class ChessBoard {
 
     private void updateZobrist(int side, int piece, int square){
         this.zobrist_key ^= this.zobrist_table[side][piece][square];
+    }
+
+    private void specialZobrist(int castles, int EP){
+        this.zobrist_key ^= this.zobrist_castles[castles];
+        this.zobrist_key ^= this.zobrist_ep[EP];
+
     }
 
     private void update_castles(int type_from, int from, int special, int type_to, int to){
@@ -322,7 +353,7 @@ public class ChessBoard {
             parsed_move+=promos[promo_piece];
         }
         else if(special == 2){
-            // Short Castle zero or O??
+            // TODO Short Castle 0 or O??
             parsed_move = "O-O";
         }
         else if(special == 3){

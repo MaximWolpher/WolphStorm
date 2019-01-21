@@ -14,6 +14,7 @@ public class Game {
         this.chess.setMoves(moves);
         this.chess.setMagics(magics);
         this.chess.fen_to_board(fen);
+        this.chess.init_zobrist();
     }
 
     public ArrayList<Integer> generate_moves(){
@@ -50,5 +51,9 @@ public class Game {
 
     public ArrayList<Integer> updateMoves(ArrayList<Integer> moves, int pv){
         return this.chess.update_moves(moves, pv);
+    }
+
+    public long getZobrist(){
+        return this.chess.zobrist_key;
     }
 }
