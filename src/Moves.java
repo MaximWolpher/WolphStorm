@@ -28,9 +28,9 @@ public class Moves {
         long not_my_pieces = ~pieces[chess.turn];
 
         ArrayList<Integer> all_moves = new ArrayList<>();
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][4], new long[0], 4, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][3], new long[0], 3, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
-        all_moves.addAll(pseudo_moves(chess.board[chess.turn][2], new long[0], 2, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][4], null, 4, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][3], null, 3, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
+        all_moves.addAll(pseudo_moves(chess.board[chess.turn][2], null, 2, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
         all_moves.addAll(pseudo_moves(chess.board[chess.turn][1], this.Knight_Move_List, 1, enemy_pieces, not_my_pieces, occupied, magics, chess.board, chess.turn));
 
         if(chess.turn == 1){
@@ -186,13 +186,13 @@ public class Moves {
         if((castle_right & 1) == 1){    // Queen castle
             if(((7L << (loc + 1)) & occupied) == 0 && isNotInCheck((7L << loc),occupied,turn,board,magics)){
                 // If there is no blocker between king and queen-side rook
-                moves.add(move_integer(0L, loc,0,5,3, new long[0][0], turn)); // Encoding for queen castle
+                moves.add(move_integer(0L, loc,0,5,3, null, turn)); // Encoding for queen castle
             }
         }
         if((castle_right & 2) == 2){    // King castle
             if(((3L << (loc - 2)) & occupied) == 0 && isNotInCheck((7L << (loc - 2)),occupied,turn,board,magics)){
                 // If there is no blocker between king and king-side rook
-                moves.add(move_integer(0L, loc, 0, 5, 2, new long[0][0], turn)); // Encoding for king castle
+                moves.add(move_integer(0L, loc, 0, 5, 2, null, turn)); // Encoding for king castle
             }
         }
         return moves;
@@ -283,9 +283,13 @@ public class Moves {
     }
 
     public ArrayList<Integer> order_moves(ArrayList<Integer> moves, int pv){
+        moves.sort((Integer m1, Integer m2) -> -(((m1 & 4)*(1+((m1 >>> 4) & 7))) - ((m2 & 4)*(1+(m2 >>> 4) & 7))));
         if(pv != 0){
-            moves.remove(moves.indexOf(pv));
-            moves.add(0, pv);
+            int ind = moves.indexOf(pv);
+            if (ind != -1) {
+                moves.remove(ind);
+                moves.add(0, pv);
+            }
         }
         return moves;
     }

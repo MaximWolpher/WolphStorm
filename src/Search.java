@@ -86,22 +86,22 @@ public class Search {
         return alpha;
     }
 
-    int pvSearch(int alpha, int beta, int depthleft, int ply, int pv) {
+    int pvSearch(int alpha, int beta, int depthleft, int ply, MoveClass pv) {
         int hash_flag = TranspositionTable.hashALPHA;
         int hash_val = this.transpositionTable.ProbeHash(this.game, depthleft, alpha, beta);
         if (hash_val != TranspositionTable.valUNKNOWN) {
             return hash_val;
         }
         if( depthleft == 0 ) {
-            int eval = Rating.eval_func(this.game.getChess());
+            int eval = quieSearch(alpha, beta);
             this.transpositionTable.RecordHash(this.game, depthleft, eval, TranspositionTable.hashEXACT, null);
             return eval;
         }
         boolean bSearchPv = true;
         int score;
         ArrayList<Integer> moves = this.game.generate_moves();
-        if(ply == 0) {
-            this.game.updateMoves(moves, pv);
+        if(pv != null) {
+            this.game.updateMoves(moves, pv.move);
         }
         boolean checkmate = true;
         for (int m: moves)  {
@@ -122,7 +122,7 @@ public class Search {
                 this.game.unmake_move();
                 if (score >= beta) {
                     this.transpositionTable.RecordHash(
-                            this.game, depthleft, beta, TranspositionTable.hashBETA, this.best_move
+                            this.game, depthleft, beta, TranspositionTable.hashBETA, pv
                     );
                     return beta;   // fail-hard beta-cutoff
                 }
@@ -142,12 +142,13 @@ public class Search {
         this.transpositionTable.RecordHash(this.game, depthleft, alpha, hash_flag, this.best_move);
         return alpha;
     }
-    int zwSearch(int beta, int depth, int ply ) {
+    private int zwSearch(int beta, int depth, int ply ) {
         // alpha == beta - 1
         // this is either a cut- or all-node
         if( depth == 0 ) {
-            int eval = Rating.eval_func(this.game.getChess());
+            int eval = quieSearch(beta - 1, beta);
             this.transpositionTable.RecordHash(this.game, depth, eval, TranspositionTable.hashBETA, null);
+            return eval;
         }
         ArrayList<Integer> moves = this.game.generate_moves();
         int score;
@@ -174,6 +175,39 @@ public class Search {
 
         this.transpositionTable.RecordHash(this.game, depth, beta-1, TranspositionTable.hashBETA, null);
         return beta-1; // fail-hard, return alpha
+    }
+
+    int quieSearch(int alpha, int beta) {
+        int stand_pat = Rating.eval_func(game.getChess());
+        if( stand_pat >= beta ) {
+            return beta;
+        }
+        if( alpha < stand_pat ) {
+            alpha = stand_pat;
+        }
+        ArrayList<Integer> moves = game.generate_moves();
+        int score;
+        for (int m: moves) {
+            if((m & 4) == 0){
+                continue;
+            }
+            boolean legal = this.game.make_move(m);
+            if (!legal) {
+                this.game.unmake_move();
+            }
+            else {
+                score = -quieSearch(-beta, -alpha);
+                this.game.unmake_move();
+
+                if (score >= beta) {
+                    return beta;
+                }
+                if (score > alpha) {
+                    alpha = score;
+                }
+            }
+        }
+        return alpha;
     }
 
 }
